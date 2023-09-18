@@ -1,0 +1,66 @@
+代码分为shadow & clean data
+
+train_translator_AB.py是训练模型的py文件
+
+eval_系列文件应该是evaluate测试py文件，利用测试数据集
+eval_translator_AB.py测试运行
+eval_results.py测试结果
+eval_gallery.py结果展示
+
+dconv_model.py   把模型里模块代码都编好
+                 最后整合到整个class DistillNet中，详细看ipad笔记
+
+refinement.py    其中class RefinementBlock在dconv_model.py的最终整合distill net里，被最终输出时调用
+
+laynorm.py       规范化处理的
+                 LayerNorm2d方法在dconv_model.py中SCA和innermap/distill block中使用了
+
+loss.py          perceptual loss就是训练过程中能够目标函数，要让他最小化
+                 mse, ssim应该只是结果检测时的测试项
+                 l2正则化regularization在哪里？？？   说dropout也是正则化方法的一种
+                 paper中提及的psnr在utilis.py中，lpips distance在eval_gallery.py
+
+ImageLoaders.py  根据调用，shadow image在A文件，shadow matte在B文件，clean image在C文件
+                 涉及一些数据增强操作def augs
+                 整体自定义了2个数据集
+
+initializer.py   设置了weight权重和bias偏置
+
+UNet.py          有三大模块，UNetCompress, UNetDecompress, UNetTranslator
+                 其上/下采样的层数和论文/dconv_model.py不同？？？？？
+                 不知道和dconv_model.py里面的模块代码有啥区别？？？？？？？？
+
+utils.py         为什么要分为lab和rgb？？？是要适应不同情况吗？？？
+
+train.py         第178/239行,B_img, AB_mask, A_img是啥/class pairedimageset中getitem方法可计算mask
+
+eval_translator.py
+                 train_translator.py和eval_translator.py两个文件中的验证部分通常有不同的目的。
+                 在train.py中，每个epoch后的验证部分是用于在训练过程中监控模型的性能。这可以帮助我们了解模型是否正在学习，以及是否出现了过拟合（即模型在训练数据上表现良好，但在验证数据上表现较差）。这种验证通常是在一个小的验证集上进行的。
+                 而eval_translator.py通常是在模型训练完成后，用于评估模型在一个独立的测试集（或验证集）上的性能。这个测试集是模型在训练过程中从未见过的。这可以给我们提供模型泛化能力的更准确的度量。
+                 所以，虽然两者都进行了“验证”，但它们的目的和使用的数据集可能是不同的。
+
+README           train训练集1000, validation验证集100用于每个epoch之后, test测试集用于eval.py
+
+
+train.py中不明白的点:
+①为啥有unet和distill-net两种,还可以选??
+②第178/239行,数据集中的B_img, AB_mask, A_img是啥/需要shadow mask 图片吗? √√√
+③fullres参数是为了干嘛??
+④没有环境配置文件吗?     问了GitHub issue
+
+配置环境试一下!!
+              pycharm中调用conda虚拟环境的方法：https://blog.csdn.net/qq_32892383/article/details/116137730 3.3
+                                            https://www.bilibili.com/video/BV1S5411X7FY?p=8&vd_source=9f54cf5b2c6058569d0cc82bb54f04d8 03：40
+
+第178/239行,数据集中的B_img, AB_mask, A_img是啥：
+    根据数据调用回溯，(B_img, AB_mask, A_img)就是train_il中的遍历，
+    也就是参数设定为“'../NTIRE-SR/data/WSRD2', 'train', size=(opt.img_height, opt.img_width), use_mask=False, aug=True”的pairedimageset
+    B_img, AB_mask, A_img对应pairedimageset中getitem方法最终返回的三个值“return tensor_gt, tensor_msk, tensor_inp”
+    # smat_path_dir = path/type/type_B = masks_path = AB_img
+    # clean_path_dir = path/type/type_C = gt_images_path = B_img
+    # orig_path_dir = path/type/type_A = inp_images_path = A_img
+设置自己的文件结构：
+"D:\PyCharm\PycharmProjects\WSRD-DNSR\dataset\train OR validation OR evaluate"
+D:\PyCharm\PycharmProjects\WSRD-DNSR\dataset ---> set_path (pairedimageset的参数)
+train OR validation OR evaluate ---> set_type (对应其下有_C/_A文件夹)

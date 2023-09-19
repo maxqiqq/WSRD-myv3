@@ -56,9 +56,9 @@ def psnr_lab(lab_img_out, lab_img_gt):  # 计算psnr峰值信噪比
     return 20 * log10(255 / rmse)
 
 
-def rgb2gray(image):
-    rgb_image = 255 * image
-    return 0.299 * rgb_image[0, :, :] + 0.587 * rgb_image[1, :, :] + 0.114 * rgb_image[2, :, :]
+# def rgb2gray(image):
+#     rgb_image = 255 * image
+#     return 0.299 * rgb_image[0, :, :] + 0.587 * rgb_image[1, :, :] + 0.114 * rgb_image[2, :, :]
 
 
 def rgb2lab(numpy_rgb_img):
@@ -101,35 +101,35 @@ def analyze_image_pair_lab(synthetic_image, expected_image):
     return rmse_loss, psnr
 
 
-def compute_shadow_mask(shadow_image, shadow_free_image):
-    data_size = shadow_image.size()
-    batch_size = data_size[0]  # 表示第0维度的数据量
-    batch_mask = []
-    for i in range(batch_size):
-        diff = shadow_free_image[i, :, :, :] - shadow_image[i, :, :, :]
-        diff = rgb2gray(diff)
-        thresh = torch.median(diff)  # 返回输入的中位数
-        diff = ((diff >= thresh).float()).unsqueeze_(0)
-        batch_mask.append(diff)
-    return torch.stack(batch_mask)  # stack是常用的拼接函数之一
+# def compute_shadow_mask(shadow_image, shadow_free_image):
+#     data_size = shadow_image.size()
+#     batch_size = data_size[0]  # 表示第0维度的数据量
+#     batch_mask = []
+#     for i in range(batch_size):
+#         diff = shadow_free_image[i, :, :, :] - shadow_image[i, :, :, :]
+#         diff = rgb2gray(diff)
+#         thresh = torch.median(diff)  # 返回输入的中位数
+#         diff = ((diff >= thresh).float()).unsqueeze_(0)
+#         batch_mask.append(diff)
+#     return torch.stack(batch_mask)  # stack是常用的拼接函数之一
 
 
-def compute_shadow_mask_symmetric(shadow_image, shadow_free_image):  # mask对称是什么意思？？？？
-    data_size = shadow_image.size()
-    batch_size = data_size[0]
-    batch_mask = []
-    for i in range(batch_size):
-        """Rescale up to [0, 1]"""
-        shadow_img = (0.5 * (1 + shadow_image[i, :, :, :])).cuda()
-        shadow_free_img = (0.5 * (1 + shadow_free_image[i, :, :, :])).cuda()
-        diff = shadow_free_img - shadow_img
-        diff = rgb2gray(diff)
-        thresh = torch.median(diff)
-        diff = ((diff < thresh).float() * -2.0).unsqueeze_(0)
-        support = torch.ones(1, data_size[2], data_size[3]).cuda()
-        diff = diff + support
-        batch_mask.append(diff)
-    return torch.stack(batch_mask).cuda()
+# def compute_shadow_mask_symmetric(shadow_image, shadow_free_image):  # mask对称是什么意思？？？？
+#     data_size = shadow_image.size()
+#     batch_size = data_size[0]
+#     batch_mask = []
+#     for i in range(batch_size):
+#         """Rescale up to [0, 1]"""
+#         shadow_img = (0.5 * (1 + shadow_image[i, :, :, :])).cuda()
+#         shadow_free_img = (0.5 * (1 + shadow_free_image[i, :, :, :])).cuda()
+#         diff = shadow_free_img - shadow_img
+#         diff = rgb2gray(diff)
+#         thresh = torch.median(diff)
+#         diff = ((diff < thresh).float() * -2.0).unsqueeze_(0)
+#         support = torch.ones(1, data_size[2], data_size[3]).cuda()
+#         diff = diff + support
+#         batch_mask.append(diff)
+#     return torch.stack(batch_mask).cuda()
 
 
 def compute_shadow_mask_otsu(shadow_image, shadow_free_image):

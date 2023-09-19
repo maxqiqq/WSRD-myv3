@@ -14,7 +14,7 @@ from torch.optim.lr_scheduler import MultiStepLR  # MultiStepLR按需调整学�
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 # from UNet import UNetTranslator
-from utils import analyze_image_pair, analyze_image_pair_rgb, analyze_image_pair_lab, compute_shadow_mask_otsu # compute_shadow_mask, \
+from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
 import gc
 
 # import wandb

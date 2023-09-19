@@ -14,8 +14,7 @@ from torch.optim.lr_scheduler import MultiStepLR  # MultiStepLR按需调整学�
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from UNet import UNetTranslator
-from utils import analyze_image_pair, analyze_image_pair_rgb, analyze_image_pair_lab, compute_shadow_mask,\
-    compute_shadow_mask_otsu
+from utils import analyze_image_pair, analyze_image_pair_rgb, analyze_image_pair_lab, compute_shadow_mask_otsu # compute_shadow_mask, \
 import gc
 
 # import wandb
@@ -301,10 +300,10 @@ if __name__ == '__main__':
                     # squeeze(0) 对数据的维度进行压缩，主要作用是去掉维数为1的维度，如果out或gt形状是(1, height, width)，那么该方法会将形状变为(height, width)
                     rmse_lab, psnr_lab = analyze_image_pair_lab(out.squeeze(0), gt.squeeze(0))
                     # 两个无阴影图像之间的误差rmse & psnr
-                    shrmse_lab, shpsnr_lab = analyze_image_pair_lab((out * mask).squeeze(0), (gt * mask).squeeze(0))
-                    # mask区域之间的误差rmse & psnr  sh代表shadow？？？？？？？？
-                    frmse_lab, fpsnr_lab = analyze_image_pair_lab((out * (1 - mask)).squeeze(0), (gt * (1 - mask)).squeeze(0))
-                    # mask区域之外的来给你这误差rmse & psnr     f代表free（对应1-mask）？？？？？？？？？
+                    # shrmse_lab, shpsnr_lab = analyze_image_pair_lab((out * mask).squeeze(0), (gt * mask).squeeze(0))
+                    # # mask区域之间的误差rmse & psnr  sh代表shadow？？？？？？？？
+                    # frmse_lab, fpsnr_lab = analyze_image_pair_lab((out * (1 - mask)).squeeze(0), (gt * (1 - mask)).squeeze(0))
+                    # # mask区域之外的来给你这误差rmse & psnr     f代表free（对应1-mask）？？？？？？？？？
 
                     re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
                     # 在utilis文件中，analyze_image_pair返回两个值“return rmse_loss, psnr”，分别赋予re和_
@@ -316,11 +315,11 @@ if __name__ == '__main__':
                     lab_rmse_epoch += rmse_lab
                     lab_psnr_epoch += psnr_lab
 
-                    lab_shrmse_epoch += shrmse_lab
-                    lab_shpsnr_epoch += shpsnr_lab
+                    # lab_shrmse_epoch += shrmse_lab
+                    # lab_shpsnr_epoch += shpsnr_lab
 
-                    lab_frmse_epoch += frmse_lab
-                    lab_fpsnr_epoch += fpsnr_lab
+                    # lab_frmse_epoch += frmse_lab
+                    # lab_fpsnr_epoch += fpsnr_lab
 
                     if (epoch + 1) % opt.save_checkpoint == 0:
                         # 检验下一个epoch是否是save point
@@ -352,11 +351,11 @@ if __name__ == '__main__':
                 lab_rmse_epoch /= val_samples
                 lab_psnr_epoch /= val_samples
 
-                lab_shrmse_epoch /= val_samples
-                lab_shpsnr_epoch /= val_samples
+                # lab_shrmse_epoch /= val_samples
+                # lab_shpsnr_epoch /= val_samples
 
-                lab_frmse_epoch /= val_samples
-                lab_fpsnr_epoch /= val_samples
+                # lab_frmse_epoch /= val_samples
+                # lab_fpsnr_epoch /= val_samples
 
             # wandb.log({
             #     "rmse": lab_rmse_epoch,
@@ -365,14 +364,14 @@ if __name__ == '__main__':
             #
             # })
 
-            print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} | {} | {} | {} - PSNR - {} | {} | {} | {}".format(
+            print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} | {} - PSNR - {} | {}".format(
                                                                                     epoch, train_epoch_loss,
                                                                                     valid_epoch_loss, train_epoch_mask_loss,
                                                                                     valid_mask_loss,
                                                                                     rmse_epoch, lab_rmse_epoch,
-                                                                                    lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                    psnr_epoch, lab_psnr_epoch,
-                                                                                    lab_shpsnr_epoch, lab_fpsnr_epoch))
+                                                                                    # lab_shrmse_epoch, lab_frmse_epoch,
+                                                                                    psnr_epoch, lab_psnr_epoch))
+                                                                                    # lab_shpsnr_epoch, lab_fpsnr_epoch))
             if rmse_epoch < best_rmse and epoch > 0:
                 best_rmse = rmse_epoch
                 print("Saving checkpoint for {}".format(best_rmse))

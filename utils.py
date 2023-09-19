@@ -42,18 +42,18 @@ def compute_otsu_mask(img, img_free):  # 和上面的compute_loader_otsu_mask有
     return mask
 
 
-def rescale_lab(lab_img):  # 看不懂？？？？？？？
-    lab_img[:, :, 0] *= 255.0/100.0
-    lab_img[:, :, 1] = (lab_img[:, :, 1] + 127.0)
-    lab_img[:, :, 2] = (lab_img[:, :, 2] + 127.0)
-    return lab_img
+# def rescale_lab(lab_img):  # 看不懂？？？？？？？
+#     lab_img[:, :, 0] *= 255.0/100.0
+#     lab_img[:, :, 1] = (lab_img[:, :, 1] + 127.0)
+#     lab_img[:, :, 2] = (lab_img[:, :, 2] + 127.0)
+#     return lab_img
 
 
-def psnr_lab(lab_img_out, lab_img_gt):  # 计算psnr峰值信噪比
-    lab_img_gt = rescale_lab(lab_img_gt)
-    lab_img_out = rescale_lab(lab_img_out)
-    rmse = np.sqrt(mean_squared_error(lab_img_gt, lab_img_out))
-    return 20 * log10(255 / rmse)
+# def psnr_lab(lab_img_out, lab_img_gt):  # 计算psnr峰值信噪比
+#     lab_img_gt = rescale_lab(lab_img_gt)
+#     lab_img_out = rescale_lab(lab_img_out)
+#     rmse = np.sqrt(mean_squared_error(lab_img_gt, lab_img_out))
+#     return 20 * log10(255 / rmse)
 
 
 # def rgb2gray(image):
@@ -61,10 +61,10 @@ def psnr_lab(lab_img_out, lab_img_gt):  # 计算psnr峰值信噪比
 #     return 0.299 * rgb_image[0, :, :] + 0.587 * rgb_image[1, :, :] + 0.114 * rgb_image[2, :, :]
 
 
-def rgb2lab(numpy_rgb_img):
-    numpy_rgb_img = numpy_rgb_img.transpose((2, 1, 0))
-    lab_img = color.rgb2lab(numpy_rgb_img)
-    return lab_img
+# def rgb2lab(numpy_rgb_img):
+#     numpy_rgb_img = numpy_rgb_img.transpose((2, 1, 0))
+#     lab_img = color.rgb2lab(numpy_rgb_img)
+#     return lab_img
 
 
 def analyze_image_pair(synthetic_image, expected_image):
@@ -87,18 +87,18 @@ def analyze_image_pair_rgb(synthetic_image, expected_image):
     return rmse_loss, psnr
 
 
-def analyze_image_pair_lab(synthetic_image, expected_image):
-    synthetic_image = (255. * synthetic_image.detach().cpu().numpy()).astype(np.uint8)  # 通过astype()强制转化数据类型
-    expected_image = (255. * expected_image.detach().cpu().numpy()).astype(np.uint8)
+# def analyze_image_pair_lab(synthetic_image, expected_image):
+#     synthetic_image = (255. * synthetic_image.detach().cpu().numpy()).astype(np.uint8)  # 通过astype()强制转化数据类型
+#     expected_image = (255. * expected_image.detach().cpu().numpy()).astype(np.uint8)
 
-    lab_syn_img = rgb2lab(synthetic_image)
-    lab_gt_img = rgb2lab(expected_image)
+#     lab_syn_img = rgb2lab(synthetic_image)
+#     lab_gt_img = rgb2lab(expected_image)
 
-    mse_loss = mean_squared_error(lab_syn_img, lab_gt_img)
-    rmse_loss = np.sqrt(mse_loss)
+#     mse_loss = mean_squared_error(lab_syn_img, lab_gt_img)
+#     rmse_loss = np.sqrt(mse_loss)
 
-    psnr = psnr_lab(lab_syn_img, lab_gt_img)
-    return rmse_loss, psnr
+#     psnr = psnr_lab(lab_syn_img, lab_gt_img)
+#     return rmse_loss, psnr
 
 
 # def compute_shadow_mask(shadow_image, shadow_free_image):

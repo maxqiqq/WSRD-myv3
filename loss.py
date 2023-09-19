@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchvision.transforms.functional as Ft
 from PIL import ImageFilter
 from torchvision.models import vgg16, VGG16_Weights
-import wandb  # wandb是一个免费的，用于记录实验数据的工具。需要在官网创建team
+# import wandb  # wandb是一个免费的，用于记录实验数据的工具。需要在官网创建team
 
 
 def gram_matrix(i_input):
@@ -93,11 +93,11 @@ class PerceptualLossModule:
         color_loss = self.compute_color_loss(synthetic.detach(), real)
         style_loss = self.compute_style_loss(synthetic.detach(), real)
         content_loss = self.compute_content_loss(synthetic.detach(), real)
-        wandb.log({
-            "color_loss": color_loss,
-            "style_loss": style_loss,
-            "content_loss": content_loss
-        })
+        # wandb.log({
+        #     "color_loss": color_loss,
+        #     "style_loss": style_loss,
+        #     "content_loss": content_loss
+        # })
         perceptual_loss = color_loss + style_loss + content_loss
         return perceptual_loss
 

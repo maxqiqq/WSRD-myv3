@@ -4,7 +4,7 @@ import torch
 from dconv_model import DistillNet
 from initializer import weights_init_normal
 from ImageLoaders import PairedImageSet
-from loss import PerceptualLossModule, custom_mse_loss
+from loss import PerceptualLossModule # , custom_mse_loss
 from torch.autograd import Variable
 # autograd包是PyTorch中神经网络的核心, 为基于tensor的的所有操作提供自动微分。是一个逐个运行框架, 意味反向传播是根据代码运行的, 且每次的迭代运行都可能不同.
 # Variable包裹着Tensor, 支持几乎所有Tensor的操作,并附加额外的属性
@@ -13,7 +13,7 @@ from torch.nn.functional import interpolate  # 可以實現上采樣
 from torch.optim.lr_scheduler import MultiStepLR  # MultiStepLR按需调整学习率，按照设定间隔调整学习率
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
-from UNet import UNetTranslator
+# from UNet import UNetTranslator
 from utils import analyze_image_pair, analyze_image_pair_rgb, analyze_image_pair_lab, compute_shadow_mask_otsu # compute_shadow_mask, \
 import gc
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # argparse 模块还可自动生成用户手册，即下面的help
     parser = argparse.ArgumentParser()
     # 创建解析器，即创建一个argumentparser对象，其中包含将命令行解析成python数据类型所需的全部信息
-    parser.add_argument("--model_type", type=int, default=0, help="[0]UNet [else]DistillNet")
+    parser.add_argument("--model_type", type=int, default=2, help="[0]UNet [else]DistillNet")
     parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
     # 这个参数--fullres是一个命令行参数，它的值可以是0或1，具体含义如下：
     # 当--fullres的值为0时，模型将以hxwx3的方式进行推理。这可能意味着模型将在一个具有特定高度（h）、宽度（w）和3个颜色通道的输入上进行推理。
@@ -170,14 +170,14 @@ if __name__ == '__main__':
         rmse_epoch = 0
         psnr_epoch = 0
 
-        lab_rmse_epoch = 0
-        lab_psnr_epoch = 0
+        # lab_rmse_epoch = 0
+        # lab_psnr_epoch = 0
 
-        lab_shrmse_epoch = 0
-        lab_shpsnr_epoch = 0
+        # lab_shrmse_epoch = 0
+        # lab_shpsnr_epoch = 0
 
-        lab_frmse_epoch = 0
-        lab_fpsnr_epoch = 0
+        # lab_frmse_epoch = 0
+        # lab_fpsnr_epoch = 0
 
         translator = translator.cuda()
         translator = translator.train()
@@ -298,7 +298,7 @@ if __name__ == '__main__':
                     rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
 
                     # squeeze(0) 对数据的维度进行压缩，主要作用是去掉维数为1的维度，如果out或gt形状是(1, height, width)，那么该方法会将形状变为(height, width)
-                    rmse_lab, psnr_lab = analyze_image_pair_lab(out.squeeze(0), gt.squeeze(0))
+                    # rmse_lab, psnr_lab = analyze_image_pair_lab(out.squeeze(0), gt.squeeze(0))
                     # 两个无阴影图像之间的误差rmse & psnr
                     # shrmse_lab, shpsnr_lab = analyze_image_pair_lab((out * mask).squeeze(0), (gt * mask).squeeze(0))
                     # # mask区域之间的误差rmse & psnr  sh代表shadow？？？？？？？？
@@ -312,8 +312,8 @@ if __name__ == '__main__':
                     rmse_epoch += rmse
                     psnr_epoch += psnr
 
-                    lab_rmse_epoch += rmse_lab
-                    lab_psnr_epoch += psnr_lab
+                    # lab_rmse_epoch += rmse_lab
+                    # lab_psnr_epoch += psnr_lab
 
                     # lab_shrmse_epoch += shrmse_lab
                     # lab_shpsnr_epoch += shpsnr_lab
@@ -348,8 +348,8 @@ if __name__ == '__main__':
                 # 最后再➗样本数量,即计算验证集上的平均RMSE
                 psnr_epoch /= val_samples
 
-                lab_rmse_epoch /= val_samples
-                lab_psnr_epoch /= val_samples
+                # lab_rmse_epoch /= val_samples
+                # lab_psnr_epoch /= val_samples
 
                 # lab_shrmse_epoch /= val_samples
                 # lab_shpsnr_epoch /= val_samples
@@ -364,13 +364,13 @@ if __name__ == '__main__':
             #
             # })
 
-            print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} | {} - PSNR - {} | {}".format(
+            print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} - PSNR - {}".format(
                                                                                     epoch, train_epoch_loss,
                                                                                     valid_epoch_loss, train_epoch_mask_loss,
                                                                                     valid_mask_loss,
-                                                                                    rmse_epoch, lab_rmse_epoch,
+                                                                                    rmse_epoch,  # lab_rmse_epoch,
                                                                                     # lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                    psnr_epoch, lab_psnr_epoch))
+                                                                                    psnr_epoch)) # lab_psnr_epoch))
                                                                                     # lab_shpsnr_epoch, lab_fpsnr_epoch))
             if rmse_epoch < best_rmse and epoch > 0:
                 best_rmse = rmse_epoch

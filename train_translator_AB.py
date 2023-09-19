@@ -67,9 +67,9 @@ if __name__ == '__main__':
 
     parser.add_argument("--valid_checkpoint", type=int, default=1, help="checkpoint for validation")
     parser.add_argument("--save_checkpoint", type=int, default=3, help="checkpoint for visual inspection")
-    parser.add_argument("--model_dir", default="D:/PyCharm/PycharmProjects/WSRD-DNSR/model",
+    parser.add_argument("--model_dir", default="./model",
                         help="Path of destination directory for the trained models")  # 保存训练模型
-    parser.add_argument("--image_dir", default="D:/PyCharm/PycharmProjects/WSRD-DNSR/savepoint_gallery",
+    parser.add_argument("--image_dir", default="./savepoint_gallery",
                         help="Path for the directory used to save the output test images")
     opt = parser.parse_args()
     print(opt)  # .parse_args()方法把参数提取并放到opt中print
@@ -114,9 +114,9 @@ if __name__ == '__main__':
 
     Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
-    train_set = PairedImageSet('D:/PyCharm/PycharmProjects/WSRD-DNSR/dataset', 'train',
+    train_set = PairedImageSet('./dataset', 'train',
                                size=(opt.img_height, opt.img_width), use_mask=False, aug=True)
-    validation_set = PairedImageSet('D:/PyCharm/PycharmProjects/WSRD-DNSR/dataset', 'validation', size=None,
+    validation_set = PairedImageSet('./dataset', 'validation', size=None,
                                     use_mask=False, aug=False)
     # size=none表示不做改变
 

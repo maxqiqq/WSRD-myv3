@@ -4,7 +4,7 @@ from dconv_model import DistillNet
 # from initializer import weights_init_normal
 from ImageLoaders import PairedImageSet
 from loss import PerceptualLossModule # , custom_mse_loss
-from torch.autograd import Variable
+# from torch.autograd import Variable
 # autograd包是PyTorch中神经网络的核心, 为基于tensor的的所有操作提供自动微分。是一个逐个运行框架, 意味反向传播是根据代码运行的, 且每次的迭代运行都可能不同.
 # Variable包裹着Tensor, 支持几乎所有Tensor的操作,并附加额外的属性
 # https://zhuanlan.zhihu.com/p/34298983
@@ -197,10 +197,13 @@ if __name__ == '__main__':
             # 对于mask,原始数据集中并没,但class PairedImageSet的__getitem__方法说明,若本身不含mask那么compute_loader_otsu_mask即可
             # 所以说加载dataloader≠train_dataset,还有class PairedImageSet中定义的其他部分
             # B_img, AB_mask, A_img对应pairedimageset中getitem方法最终返回的三个值“return tensor_gt, tensor_msk, tensor_inp”
-
-            inp = Variable(A_img.type(Tensor))  # input
-            gt = Variable(B_img.type(Tensor))
-            mask = Variable(AB_mask.type(Tensor))
+            
+            # inp = Variable(A_img.type(Tensor))  
+            # gt = Variable(B_img.type(Tensor))
+            # mask = Variable(AB_mask.type(Tensor))
+            inp = A_img.type(Tensor)  # input
+            gt = B_img.type(Tensor)
+            mask = AB_mask.type(Tensor)
             # print(f"通道数：{mask.shape[1]}")
             # print(f"通道数：{inp.shape[1]}")
             # print(f"通道数：{gt.shape[1]}")
@@ -276,9 +279,12 @@ if __name__ == '__main__':
 
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
                     # 此语句开始每个epoch的评估validation阶段
-                    inp = Variable(A_img.type(Tensor))
-                    gt = Variable(B_img.type(Tensor))
-                    mask = Variable(AB_mask.type(Tensor))
+                    # inp = Variable(A_img.type(Tensor))
+                    # gt = Variable(B_img.type(Tensor))
+                    # mask = Variable(AB_mask.type(Tensor))
+                    inp = A_img.type(Tensor)
+                    gt = B_img.type(Tensor)
+                    mask = AB_mask.type(Tensor)
 
                     if epoch > 0:
                         if opt.fullres == 0:

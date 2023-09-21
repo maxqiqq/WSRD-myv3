@@ -1,5 +1,4 @@
 import argparse  # argparse是python用于解析命令行参数和选项的标准模块
-import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
 import torch
 from dconv_model import DistillNet
 # from initializer import weights_init_normal
@@ -15,8 +14,14 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 # from UNet import UNetTranslator
 from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
-import gc
 
+set PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:125
+import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:125"
+
+import gc
+gc.collect()
+torch.cuda.empty_cache()
 # import wandb
 # wandb.init(project="DISTILL-NET-WSRD2-TEST-REPORT")
 
@@ -207,9 +212,6 @@ if __name__ == '__main__':
             optimizer_G.zero_grad()
             gc.collect()
             torch.cuda.empty_cache()
-
-            def report_gpu():
-               print(torch.cuda.list_gpu_processes())
 
             out = translator(inp, mask)
             gc.collect()

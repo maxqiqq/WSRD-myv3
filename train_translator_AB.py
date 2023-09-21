@@ -16,7 +16,7 @@ from torchvision.utils import save_image
 from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
 
 import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:125"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:127"
 
 import gc
 gc.collect()

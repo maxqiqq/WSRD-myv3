@@ -89,10 +89,10 @@ if __name__ == '__main__':
     else:
         device = "cpu"
 
-    if opt.model_type == 0:  # 根据上面参数设定0为UNet
-        translator = UNetTranslator(in_channels=3, out_channels=3)
-        translator.apply(weights_init_normal)
-    else:
+    # if opt.model_type == 0:  # 根据上面参数设定0为UNet
+    #     translator = UNetTranslator(in_channels=3, out_channels=3)
+    #     translator.apply(weights_init_normal)
+    # else:
         translator = DistillNet(num_iblocks=4, num_ops=4)
         # 通常用torch.nn.DataParallel()函数来用多个gpu加速训练
 

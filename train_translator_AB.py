@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # argparse 模块还可自动生成用户手册，即下面的help
     parser = argparse.ArgumentParser()
     # 创建解析器，即创建一个argumentparser对象，其中包含将命令行解析成python数据类型所需的全部信息
-    parser.add_argument("--model_type", type=int, default=2, help="[0]UNet [else]DistillNet")
+    # parser.add_argument("--model_type", type=int, default=2, help="[0]UNet [else]DistillNet")
     parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
     # 这个参数--fullres是一个命令行参数，它的值可以是0或1，具体含义如下：
     # 当--fullres的值为0时，模型将以hxwx3的方式进行推理。这可能意味着模型将在一个具有特定高度（h）、宽度（w）和3个颜色通道的输入上进行推理。
@@ -84,22 +84,22 @@ if __name__ == '__main__':
     pl = PerceptualLossModule()
 
     cuda = torch.cuda.is_available()
-    if cuda:
-        device = "cuda"
-    else:
-        device = "cpu"
+    # if cuda:
+    device = "cuda"
+    # else:
+    #     device = "cpu"
 
-    if opt.model_type == 0:  # 根据上面参数设定0为UNet
-        translator = UNetTranslator(in_channels=3, out_channels=3)
-        translator.apply(weights_init_normal)
-    else:
-        translator = DistillNet(num_iblocks=1, num_ops=1)
+    # if opt.model_type == 0:  # 根据上面参数设定0为UNet
+    #     translator = UNetTranslator(in_channels=3, out_channels=3)
+    #     translator.apply(weights_init_normal)
+    # else:
+    translator = DistillNet(num_iblocks=1, num_ops=1)
         # 通常用torch.nn.DataParallel()函数来用多个gpu加速训练
 
-    if cuda:
-        print("USING CUDA FOR MODEL TRAINING")
-        translator.cuda()
-        criterion_pixelwise.cuda()
+    # if cuda:
+    print("USING CUDA FOR MODEL TRAINING")
+    translator.cuda()
+    criterion_pixelwise.cuda()
 
     optimizer_G = torch.optim.Adam(translator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
     # adam优化算法；lr学习率控制了权重的更新比例
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     num_samples = len(dataloader)
     val_samples = len(val_dataloader)
-    print(num_samples,val_samples)
+    # print(num_samples,val_samples)
     
     translator_train_loss = []  # 创建一个名为 translator_train_loss 的空列表,可用来存储一些值
     translator_valid_loss = []

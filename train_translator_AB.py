@@ -93,7 +93,7 @@ if __name__ == '__main__':
         translator = UNetTranslator(in_channels=3, out_channels=3)
         translator.apply(weights_init_normal)
     else:
-        translator = DistillNet(num_iblocks=4, num_ops=4)
+        translator = DistillNet(num_iblocks=4, num_ops=3)
         # 通常用torch.nn.DataParallel()函数来用多个gpu加速训练
 
     if cuda:

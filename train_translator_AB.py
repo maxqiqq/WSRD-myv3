@@ -14,10 +14,10 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 # from UNet import UNetTranslator
 from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
-
 import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
-
 import gc
+import koila
+
 gc.collect()
 torch.cuda.empty_cache()
 # import wandb
@@ -204,6 +204,8 @@ if __name__ == '__main__':
             # print(f"通道数：{mask.shape[1]}")
             # print(f"通道数：{inp.shape[1]}")
             # print(f"通道数：{gt.shape[1]}")
+            (inp, mask) = koila.lazy(inp, mask, batch=0)
+            
             gc.collect()
             torch.cuda.empty_cache()
             

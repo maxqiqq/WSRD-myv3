@@ -7,7 +7,6 @@ import torchvision.transforms as transforms
 from PIL import Image  # PIL，全称 Python Imaging Library，是 Python 平台一个功能非常强大而且简单易用的图像处理库。
 from torchvision.transforms import InterpolationMode  # pytorch中resize使用到的一个参数
 from utils import compute_loader_otsu_mask
-import koila
 
 class ImageSet(data.Dataset):
     # 这里自定义了一个dataset类，名为imageset
@@ -156,7 +155,6 @@ class PairedImageSet(data.Dataset):
         # smat_path_dir = path/type/type_B = masks_path = AB_img
         # clean_path_dir = path/type/type_C = gt_images_path = B_img
         # orig_path_dir = path/type/type_A = inp_images_path = A_img
-        (tensor_inp, tensor_msk) = koila.lazy(tensor_inp, tensor_msk, batch=0)
         return tensor_gt, tensor_msk, tensor_inp
 
 

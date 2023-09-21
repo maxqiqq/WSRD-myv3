@@ -56,7 +56,7 @@ if __name__ == '__main__':
     parser.add_argument("--decay_steps", type=int, default=2, help="number of step decays")
     # 衰减速度，相当于iteration数值，训练一个batch就是一个迭代
 
-    parser.add_argument("--n_cpu", type=int, default=2, help="number of cpu threads to use during batch generation")
+    parser.add_argument("--n_cpu", type=int, default=16, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_height", type=int, default=2048, help="size of image height")
     parser.add_argument("--img_width", type=int, default=2048, help="size of image width")
     parser.add_argument("--channels", type=int, default=3, help="number of image channels")

@@ -2,7 +2,7 @@ import argparse  # argparse是python用于解析命令行参数和选项的标�
 import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
 import torch
 from dconv_model import DistillNet
-from initializer import weights_init_normal
+# from initializer import weights_init_normal
 from ImageLoaders import PairedImageSet
 from loss import PerceptualLossModule # , custom_mse_loss
 from torch.autograd import Variable
@@ -74,8 +74,10 @@ if __name__ == '__main__':
     print(opt)  # .parse_args()方法把参数提取并放到opt中print
 
     print('CUDA: ', torch.cuda.is_available(), torch.cuda.device_count())
-
-    os.makedirs(opt.model_dir, exist_ok=True)  # exist_ok只有在目录不存在时创建目录，目录已存在时不会抛出异常。
+    gc.collect()
+    torch.cuda.empty_cache()
+    
+    # os.makedirs(opt.model_dir, exist_ok=True)  # exist_ok只有在目录不存在时创建目录，目录已存在时不会抛出异常。
     # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:32"
 
     criterion_pixelwise = torch.nn.MSELoss()  # 均方误差
@@ -94,7 +96,7 @@ if __name__ == '__main__':
         translator = DistillNet(num_iblocks=6, num_ops=4)
         # 通常用torch.nn.DataParallel()函数来用多个gpu加速训练
 
-    if cuda:
+    # if cuda:
         print("USING CUDA FOR MODEL TRAINING")
         translator.cuda()
         criterion_pixelwise.cuda()
@@ -111,8 +113,10 @@ if __name__ == '__main__':
     # 假设初始lr=0.5，range（200，400，100），则scheduler意为利用优化算法optimizer_G，在区间[0,200]lr=0.5/[200,300]lr=0.5*gamma/[300.400]lr=0.5*gamma^2
     # optimizer是指定使用哪个优化器，scheduler是对优化器的学习率进行调整
 
-    Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
-
+    Tensor = torch.cuda.FloatTensor # if cuda else torch.FloatTensor
+    gc.collect()
+    torch.cuda.empty_cache()
+    
     train_set = PairedImageSet('./dataset', 'train',
                                size=(opt.img_height, opt.img_width), use_mask=False, aug=True)
     validation_set = PairedImageSet('./dataset', 'validation', size=None,
@@ -136,7 +140,8 @@ if __name__ == '__main__':
 
     num_samples = len(dataloader)
     val_samples = len(val_dataloader)
-
+    print(num_samples,val_samples)
+    
     translator_train_loss = []  # 创建一个名为 translator_train_loss 的空列表,可用来存储一些值
     translator_valid_loss = []
 
@@ -196,18 +201,30 @@ if __name__ == '__main__':
             # print(f"通道数：{mask.shape[1]}")
             # print(f"通道数：{inp.shape[1]}")
             # print(f"通道数：{gt.shape[1]}")
-
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             optimizer_G.zero_grad()
-            # gc.collect()
-            # torch.cuda.empty_cache()
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             out = translator(inp, mask)
-
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
-
             mask_loss = criterion_pixelwise(synthetic_mask, mask)
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             loss_pixel = criterion_pixelwise(out, gt)
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-
+            gc.collect()
+            torch.cuda.empty_cache()
+            
             loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss +\
                      opt.mask_weight * mask_loss
 

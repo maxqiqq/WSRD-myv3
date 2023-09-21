@@ -20,7 +20,7 @@ class Tools:
 def compute_loader_otsu_mask(img, img_free):  # 计算otsu分割所需的mask
     im_free = Tools.gray(img_free)
     im_ = Tools.gray(img)
-    diff = np.abs(np.asarray(im_free, dtype='float32') - np.asarray(im_, dtype='float32'))  # diff应该是两者间的差异
+    diff = np.abs(np.asarray(im_free, dtype='float16') - np.asarray(im_, dtype='float16'))  # diff应该是两者间的差异
     img_diff = Image.fromarray(np.uint8(diff))  # 把diff图像化
     max_diff = img_diff.filter(ImageFilter.MaxFilter(size=3))
     diff = np.asarray(max_diff)
@@ -32,12 +32,12 @@ def compute_loader_otsu_mask(img, img_free):  # 计算otsu分割所需的mask
 def compute_otsu_mask(img, img_free):  # 和上面的compute_loader_otsu_mask有啥区别？？？？？？？
     im_free = Tools.gray(Tools.pil((img_free.data).cpu()))
     im_ = Tools.gray(Tools.pil((img.data).cpu()))
-    diff = np.abs(np.asarray(im_free, dtype='float32') - np.asarray(im_, dtype='float32'))  # np.abs返回数值绝对值
+    diff = np.abs(np.asarray(im_free, dtype='float16') - np.asarray(im_, dtype='float16'))  # np.abs返回数值绝对值
     img_diff = Image.fromarray(np.uint8(diff))
     max_diff = img_diff.filter(ImageFilter.MaxFilter(size=3))
     diff = np.asarray(max_diff)
     thresh = threshold_otsu(diff)
-    mask = torch.tensor(np.float32(diff >= thresh)).unsqueeze(0).cuda()  # .unsqueeze进行维度扩张
+    mask = torch.tensor(np.float16(diff >= thresh)).unsqueeze(0).cuda()  # .unsqueeze进行维度扩张
     mask.requires_grad = False  # .requires_grad是tensor的一个属性，用于说明当前量是否需要在计算中保留对应的梯度信息
     return mask
 

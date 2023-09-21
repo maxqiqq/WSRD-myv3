@@ -156,7 +156,7 @@ class PairedImageSet(data.Dataset):
         # smat_path_dir = path/type/type_B = masks_path = AB_img
         # clean_path_dir = path/type/type_C = gt_images_path = B_img
         # orig_path_dir = path/type/type_A = inp_images_path = A_img
-         (tensor_inp, tensor_msk) = koila.lazy(tensor_inp, tensor_msk, batch=0)
+        (tensor_inp, tensor_msk) = koila.lazy(tensor_inp, tensor_msk, batch=0)
         return tensor_gt, tensor_msk, tensor_inp
 
 

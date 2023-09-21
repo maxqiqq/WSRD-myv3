@@ -207,7 +207,10 @@ if __name__ == '__main__':
             optimizer_G.zero_grad()
             gc.collect()
             torch.cuda.empty_cache()
-            
+
+            def report_gpu():
+               print(torch.cuda.list_gpu_processes())
+
             out = translator(inp, mask)
             gc.collect()
             torch.cuda.empty_cache()

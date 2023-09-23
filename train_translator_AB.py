@@ -20,6 +20,7 @@ import composer
 from composer import Trainer
 from composer.models import mnist_model
 from composer.loggers import InMemoryLogger
+from torchvision import datasets, transforms
 
 # gc.collect()
 # torch.cuda.empty_cache()

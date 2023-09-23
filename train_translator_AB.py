@@ -210,7 +210,10 @@ if __name__ == '__main__':
             gc.collect()
             torch.cuda.empty_cache()
             
-            optimizer_G.zero_grad()
+            optimizer_G.zero_grad()  
+            # 每次计算完神经网络需要训练的参数之后，下一个样本输入进去进行下一个训练，此时的参数与上一轮不一样了，所以此时计算的它们的梯度也是根据新的参数得到的。
+            # 这就是神经网络迭代计算需训练的参数的过程，也就是根据神经网络的公式求梯度，然后微调梯度的过程。
+            # 所以这里要在进入translator之前，梯度清零
             gc.collect()
             torch.cuda.empty_cache()
 

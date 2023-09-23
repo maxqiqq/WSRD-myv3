@@ -16,9 +16,12 @@ from torchvision.utils import save_image
 from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
 import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
 import gc
+# from composer import Trainer
+# from composer.algorithms import ChannelsLast, CutMix, LabelSmoothing
+# from composer.models import mnist_model
 
-gc.collect()
-torch.cuda.empty_cache()
+# gc.collect()
+# torch.cuda.empty_cache()
 # import wandb
 # wandb.init(project="DISTILL-NET-WSRD2-TEST-REPORT")
 
@@ -76,8 +79,8 @@ if __name__ == '__main__':
     print(opt)  # .parse_args()方法把参数提取并放到opt中print
 
     print('CUDA: ', torch.cuda.is_available(), torch.cuda.device_count())
-    gc.collect()
-    torch.cuda.empty_cache()
+    # gc.collect()
+    # torch.cuda.empty_cache()
     
     # os.makedirs(opt.model_dir, exist_ok=True)  # exist_ok只有在目录不存在时创建目录，目录已存在时不会抛出异常。
     # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:32"
@@ -116,8 +119,8 @@ if __name__ == '__main__':
     # optimizer是指定使用哪个优化器，scheduler是对优化器的学习率进行调整
 
     Tensor = torch.cuda.FloatTensor # if cuda else torch.FloatTensor
-    gc.collect()
-    torch.cuda.empty_cache()
+    # gc.collect()
+    # torch.cuda.empty_cache()
     
     train_set = PairedImageSet('./dataset', 'train',
                                size=(opt.img_height, opt.img_width), use_mask=False, aug=True)
@@ -207,32 +210,32 @@ if __name__ == '__main__':
             # print(f"通道数：{inp.shape[1]}")
             # print(f"通道数：{gt.shape[1]}")
             
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
             
             optimizer_G.zero_grad()  
             # 每次计算完神经网络需要训练的参数之后，下一个样本输入进去进行下一个训练，此时的参数与上一轮不一样了，所以此时计算的它们的梯度也是根据新的参数得到的。
             # 这就是神经网络迭代计算需训练的参数的过程，也就是根据神经网络的公式求梯度，然后微调梯度的过程。
             # 所以这里要在进入translator之前，梯度清零
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
 
             out = translator(inp, mask)
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
             
             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
             mask_loss = criterion_pixelwise(synthetic_mask, mask)
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
             
             loss_pixel = criterion_pixelwise(out, gt)
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
             
             perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-            gc.collect()
-            torch.cuda.empty_cache()
+            # gc.collect()
+            # torch.cuda.empty_cache()
             
             loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss +\
                      opt.mask_weight * mask_loss

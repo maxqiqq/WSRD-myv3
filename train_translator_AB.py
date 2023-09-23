@@ -1,7 +1,7 @@
 import argparse  # argparse是python用于解析命令行参数和选项的标准模块
 import torch
-from dconv_model import DistillNet
-# from initializer import weights_init_normal
+# from dconv_model import DistillNet
+from initializer import weights_init_normal
 from ImageLoaders import PairedImageSet
 from loss import PerceptualLossModule # , custom_mse_loss
 # from torch.autograd import Variable
@@ -12,7 +12,7 @@ from torch.nn.functional import interpolate  # 可以實現上采樣
 from torch.optim.lr_scheduler import MultiStepLR  # MultiStepLR按需调整学习率，按照设定间隔调整学习率
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
-# from UNet import UNetTranslator
+from UNet import UNetTranslator
 from utils import analyze_image_pair, compute_shadow_mask_otsu # analyze_image_pair_rgb, analyze_image_pair_lab # compute_shadow_mask, \
 import os  # os库是Python标准库，包含几百个函数,常用路径操作、进程管理、环境参数等几类。
 import gc
@@ -92,10 +92,10 @@ if __name__ == '__main__':
     #     device = "cpu"
 
     # if opt.model_type == 0:  # 根据上面参数设定0为UNet
-    #     translator = UNetTranslator(in_channels=3, out_channels=3)
-    #     translator.apply(weights_init_normal)
+    translator = UNetTranslator(in_channels=3, out_channels=3)
+    translator.apply(weights_init_normal)
     # else:
-    translator = DistillNet(num_iblocks=6, num_ops=4)
+    # translator = DistillNet(num_iblocks=6, num_ops=4)
         # 通常用torch.nn.DataParallel()函数来用多个gpu加速训练
 
     # if cuda:

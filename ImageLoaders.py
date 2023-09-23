@@ -5,7 +5,7 @@ import torchvision
 import torch.utils.data as data
 import torchvision.transforms as transforms
 from PIL import Image  # PIL，全称 Python Imaging Library，是 Python 平台一个功能非常强大而且简单易用的图像处理库。
-from torchvision.transforms import InterpolationMode  # pytorch中resize使用到的一个参数
+# from torchvision.transforms import InterpolationMode  # pytorch中resize使用到的一个参数
 from utils import compute_loader_otsu_mask
 
 class ImageSet(data.Dataset):
@@ -56,12 +56,12 @@ class PairedImageSet(data.Dataset):
         self.use_mask = use_mask
 
         self.to_tensor = transforms.ToTensor()  # to_tensor函数将原格式转化为可被pytorch快速处理的张量
-        if size is not None:
-            self.resize = transforms.Resize(self.size, interpolation=InterpolationMode.BICUBIC)
-            # Bicubic interpolation双三次插值
-            # 将图像的大小调整为指定的size，指定为train.py中262行target size
-        else:
-            self.resize = None
+        # if size is not None:
+        #     self.resize = transforms.Resize(self.size, interpolation=InterpolationMode.BICUBIC)
+        #     # Bicubic interpolation双三次插值
+        #     # 将图像的大小调整为指定的size，指定为train.py中262行target size
+        # else:
+        #     self.resize = None
             
         if use_mask:
             # 例如ISTD数据集还有shadow map的图片，训练时可以使用
@@ -142,20 +142,20 @@ class PairedImageSet(data.Dataset):
         # if self.augment:
         #     gt_data, smat_data, inp_data = self.augs(gt_data, smat_data, inp_data)
         # else:
-        if self.resize is not None:
-            gt_data = self.resize(gt_data)
-            smat_data = self.resize(smat_data)
-            inp_data = self.resize(inp_data)
+        # if self.resize is not None:
+        #     gt_data = self.resize(gt_data)
+        #     smat_data = self.resize(smat_data)
+        #     inp_data = self.resize(inp_data)
         # print(inp_data.mode)
 
-        tensor_gt = self.to_tensor(gt_data)
-        tensor_msk = self.to_tensor(smat_data)
-        tensor_inp = self.to_tensor(inp_data)
+        # tensor_gt = self.to_tensor(gt_data)
+        # tensor_msk = self.to_tensor(smat_data)
+        # tensor_inp = self.to_tensor(inp_data)
         # 从下往上找，确认三个data的路径地址，这样方便自己布置相似文件结构
         # smat_path_dir = path/type/type_B = masks_path = AB_img
         # clean_path_dir = path/type/type_C = gt_images_path = B_img
         # orig_path_dir = path/type/type_A = inp_images_path = A_img
-        return tensor_gt, tensor_msk, tensor_inp
+        return gt_data, smat_data, inp_data
 
 
 

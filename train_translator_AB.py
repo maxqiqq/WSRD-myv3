@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
 
     parser.add_argument("--n_epochs", type=int, default=15, help="number of epochs of training")
-    parser.add_argument("--resume_epoch", type=int, default=0, help="epoch to resume training")  # 重载训练，从之前中断处接着
+    parser.add_argument("--resume_epoch", type=int, default=1, help="epoch to resume training")  # 重载训练，从之前中断处接着
     parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
 
     parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
@@ -125,7 +125,36 @@ if __name__ == '__main__':
         translator = translator.cuda()
         translator = translator.train()
 
-        for i, (B_img, AB_mask, A_img) in enumerate(dataloader):
+        for i, (B_img, AB_mask, A_img) in enumerate(dataloader):  # i其实表示的是第几批batch，从0开始
+            
+            from PIL import Image
+            # 遍历每一批中的每一张图像
+                for j in range(B_img.size(0)):
+                    # 获取当前图像
+                    B_img_j = B_img[j]
+                    AB_mask_j = AB_mask[j]
+                    A_img_j = A_img[j]
+
+                    # 将图像分割为 16 个 512x512 的块
+                    for m in range(4):
+                        for n in range(4):
+                            left = n * 512
+                            upper = m * 512
+                            right = (n + 1) * 512
+                            lower = (m + 1) * 512
+
+                            B_img_chunk = B_img_j.crop((left, upper, right, lower))
+                            AB_mask_chunk = AB_mask_j.crop((left, upper, right, lower))
+                            A_img_chunk = A_img_j.crop((left, upper, right, lower))
+
+                            # 将每个块送入网络模型进行训练     得先转tensor~~~！！！！
+                            output = model(B_img_chunk, AB_mask_chunk)
+                            loss = criterion(output, A_img_chunk)
+
+                            # 计算梯度并更新模型参数
+                            loss.backward()
+                            optimizer.step()
+
             
             inp = A_img.type(Tensor)  # input
             gt = B_img.type(Tensor)

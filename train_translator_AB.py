@@ -124,9 +124,13 @@ if __name__ == '__main__':
     # gc.collect()
     # torch.cuda.empty_cache()
 
-    transform = transforms.Compose([transforms.ToTensor()])
-    train_set = datasets.MNIST("./dataset/train", download=True, train=True, transform=transform)
-    validation_set = datasets.MNIST("./dataset/evaluation", download=True, train=False, transform=transform)
+    # transform = transforms.Compose([transforms.ToTensor()])
+    # train_set = datasets.MNIST("./dataset/train", download=True, train=True, transform=transform)  # mnist是他们自己现有的一个数据集。。。
+    train_set = PairedImageSet('./dataset', 'train',
+                               size=(opt.img_height, opt.img_width), use_mask=False, aug=True)
+    validation_set = PairedImageSet('./dataset', 'validation', size=None,
+                                    use_mask=False, aug=False)
+    # validation_set = datasets.MNIST("./dataset/evaluation", download=True, train=False, transform=transform)
     # size=none表示不做改变
 
     dataloader = DataLoader(
@@ -165,7 +169,7 @@ if __name__ == '__main__':
     logger_for_baseline = InMemoryLogger()
     
     trainer = composer.trainer.Trainer(
-    model=mnist_model(translator),
+    model=translator,
     train_dataloader=dataloader,
     eval_dataloader=val_dataloader,
     max_duration="15ep",

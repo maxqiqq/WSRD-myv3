@@ -172,7 +172,7 @@ if __name__ == '__main__':
     schedulers=scheduler,
     device=device,
     loggers=logger_for_baseline,
-)
+    )
 
     start_time = time.perf_counter()
     trainer.fit() # <-- Your training loop in action!

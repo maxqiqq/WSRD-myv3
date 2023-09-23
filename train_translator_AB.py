@@ -167,6 +167,7 @@ if __name__ == '__main__':
     best_rmse = 1e3
 
     logger_for_baseline = InMemoryLogger()
+    device = "gpu" if torch.cuda.is_available() else "cpu"
     
     trainer = composer.trainer.Trainer(
     model=translator,

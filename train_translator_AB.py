@@ -128,6 +128,7 @@ if __name__ == '__main__':
         for i, (B_img, AB_mask, A_img) in enumerate(dataloader):  # i其实表示的是第几批batch，从0开始
             
             from PIL import Image
+            from torchvision import transforms
             # 遍历每一批中的每一张图像
                 for j in range(B_img.size(0)):
                     # 获取当前图像
@@ -143,17 +144,26 @@ if __name__ == '__main__':
                             right = (n + 1) * 512
                             lower = (m + 1) * 512
 
-                            B_img_chunk = B_img_j.crop((left, upper, right, lower))
-                            AB_mask_chunk = AB_mask_j.crop((left, upper, right, lower))
-                            A_img_chunk = A_img_j.crop((left, upper, right, lower))
+                            gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
+                            mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
+                            inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
 
-                            # 将每个块送入网络模型进行训练     得先转tensor~~~！！！！
-                            output = model(B_img_chunk, AB_mask_chunk)
+                            # 将每个块送入网络模型进行训练,输出结果     
+                            optimizer_G.zero_grad()  
+                            out = translator(inp, mask)
+                            # 模仿源文件，设计一系列loss计算
+                            synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
+                            mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                            loss_pixel = criterion_pixelwise(out, gt)
+                            perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
+
+                            
                             loss = criterion(output, A_img_chunk)
 
                             # 计算梯度并更新模型参数
-                            loss.backward()
-                            optimizer.step()
+                            loss_G.backward()
+                            optimizer_G.step()
 
             
             inp = A_img.type(Tensor)  # input

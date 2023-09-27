@@ -245,6 +245,8 @@ if __name__ == '__main__':
             # 在pytorch训练模型时，常会用到的一组函数依次为optimizer.zero_grad()，loss.backward()，optimizer.step()
             # 作用依次为将梯度归零，反向传播计算得到的每个参数的梯度值，通过梯度下降执行参数更新
             # 用了optimizer.step()模型才会更新
+# loss_G.backward()：这个方法用于计算损失函数 loss_G 关于网络权重的梯度，并将这些梯度存储在每个参数的 grad 属性中。这个过程也被称为反向传播。
+# optimizer_G.step()：这个方法根据存储在 grad 属性中的梯度来更新网络的权重。换句话说，它会调整权重和偏置，使得损失函数的值最大程度地减小
 
             train_epoch_loss += loss_G.detach().item()
             train_epoch_pix_loss += loss_pixel.detach().item()

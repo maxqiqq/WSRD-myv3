@@ -10,6 +10,8 @@ from torchvision.utils import save_image
 from utils import analyze_image_pair, compute_shadow_mask_otsu 
 import os  
 import gc
+from PIL import Image
+from torchvision import transforms
 
 os.environ['TORCH_HOME'] = "./loaded_models/"
 
@@ -127,8 +129,6 @@ if __name__ == '__main__':
 
         for i, (B_img, AB_mask, A_img) in enumerate(dataloader):  # i其实表示的是第几批batch，从0开始
             
-            from PIL import Image
-            from torchvision import transforms
             # 遍历每一批中的每一张图像
             for j in range(B_img.size(0)):
                 # 获取当前图像
@@ -136,37 +136,37 @@ if __name__ == '__main__':
                 AB_mask_j = AB_mask[j]
                 A_img_j = A_img[j]
 
-                    # 将图像分割为 16 个 512x512 的块
-                    for m in range(4):
-                        for n in range(4):
-                            left = n * 512
-                            upper = m * 512
-                            right = (n + 1) * 512
-                            lower = (m + 1) * 512
+                # 将图像分割为 16 个 512x512 的块
+                for m in range(4):
+                    for n in range(4):
+                        left = n * 512
+                        upper = m * 512
+                        right = (n + 1) * 512
+                        lower = (m + 1) * 512
 
-                            gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
-                            mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
-                            inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
+                        gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
+                        mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
+                        inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
 
-                            # 将每个块送入网络模型进行训练,输出结果     
-                            optimizer_G.zero_grad()  
-                            out = translator(inp, mask)
+                        # 将每个块送入网络模型进行训练,输出结果     
+                        optimizer_G.zero_grad()  
+                        out = translator(inp, mask)
                             
-                            # 模仿源文件，设计一系列loss计算
-                            synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
-                            mask_loss = criterion_pixelwise(synthetic_mask, mask)
-                            loss_pixel = criterion_pixelwise(out, gt)
-                            perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
+                        # 模仿源文件，设计一系列loss计算
+                        synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
+                        mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                        loss_pixel = criterion_pixelwise(out, gt)
+                        perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                        loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
-                            # 计算/累积梯度
-                            loss_G.backward()
+                        # 计算/累积梯度
+                        loss_G.backward()
                             
-                            # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
-                            train_epoch_loss += loss_G.detach().item()
-                            train_epoch_pix_loss += loss_pixel.detach().item()
-                            train_epoch_perc_loss += perceptual_loss.detach().item()
-                            train_epoch_mask_loss += mask_loss.detach().item()
+                        # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
+                        train_epoch_loss += loss_G.detach().item()
+                        train_epoch_pix_loss += loss_pixel.detach().item()
+                        train_epoch_perc_loss += perceptual_loss.detach().item()
+                        train_epoch_mask_loss += mask_loss.detach().item()
 
             # 一个batch后更新模型参数
             optimizer_G.step()   

@@ -91,17 +91,17 @@ if __name__ == '__main__':
     val_samples = len(val_dataloader)
    
     
-    translator_train_loss = []  
-    translator_valid_loss = []
+    # translator_train_loss = []  
+    # translator_valid_loss = []
 
-    translator_train_mask_loss = []
-    translator_valid_mask_loss = []
+    # translator_train_mask_loss = []
+    # translator_valid_mask_loss = []
 
-    translator_train_pix_loss = []
-    translator_valid_pix_loss = []
+    # translator_train_pix_loss = []
+    # translator_valid_pix_loss = []
 
-    translator_train_perc_loss = []
-    translator_valid_perc_loss = []
+    # translator_train_perc_loss = []
+    # translator_valid_perc_loss = []
 
     best_rmse = 1e3
 
@@ -151,6 +151,7 @@ if __name__ == '__main__':
                             # 将每个块送入网络模型进行训练,输出结果     
                             optimizer_G.zero_grad()  
                             out = translator(inp, mask)
+                            
                             # 模仿源文件，设计一系列loss计算
                             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
                             mask_loss = criterion_pixelwise(synthetic_mask, mask)
@@ -158,50 +159,34 @@ if __name__ == '__main__':
                             perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
                             loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
-                            
-                            loss = criterion(output, A_img_chunk)
-
-                            # 计算梯度并更新模型参数
+                            # 计算/累积梯度
                             loss_G.backward()
-                            optimizer_G.step()
+                            
+                            # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
+                            train_epoch_loss += loss_G.detach().item()
+                            train_epoch_pix_loss += loss_pixel.detach().item()
+                            train_epoch_perc_loss += perceptual_loss.detach().item()
+                            train_epoch_mask_loss += mask_loss.detach().item()
 
-            
-            inp = A_img.type(Tensor)  # input
-            gt = B_img.type(Tensor)
-            mask = AB_mask.type(Tensor)
-           
-            optimizer_G.zero_grad()  
-           
-            out = translator(inp, mask)
-          
-            synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
-            mask_loss = criterion_pixelwise(synthetic_mask, mask)
-          
-            loss_pixel = criterion_pixelwise(out, gt)
-         
-            perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-          
-            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss +\
-                     opt.mask_weight * mask_loss
+            # 一个batch后更新模型参数
+            optimizer_G.step()   
+            # 如果你是在每个小块上计算损失，那么你应该在处理完一个batch的所有小块后，再进行权重的更新。也就是说，你先计算出一个batch中所有小块的损失，然后将这些损失加起来得到整个batch的总损失，最后根据这个总损失来更新权重。
+        
+        # translator_train_loss.append(train_epoch_loss)             # 空列表train_epoch_loss最终会print出来
+        # translator_train_mask_loss.append(train_epoch_mask_loss)   # 每个训练周期的总损失，而不是平均损失，可以帮助我们更好地理解模型在整个训练周期中的表现，而不仅仅是单个样本的表现。
+        # translator_train_perc_loss.append(train_epoch_perc_loss)   # 完全的数据转移，没用；我都保存到wandb里面，注释了之前的设置
+        # translator_train_pix_loss.append(train_epoch_pix_loss)
 
-            loss_G.backward()
-            optimizer_G.step()
-         
-            train_epoch_loss += loss_G.detach().item()
-            train_epoch_pix_loss += loss_pixel.detach().item()
-            train_epoch_perc_loss += perceptual_loss.detach().item()
-            train_epoch_mask_loss += mask_loss.detach().item()  
-
-        translator_train_loss.append(train_epoch_loss)  
-        translator_train_mask_loss.append(train_epoch_mask_loss)
-        translator_train_perc_loss.append(train_epoch_perc_loss)
-        translator_train_pix_loss.append(train_epoch_pix_loss)
-
+        
         # wandb.log({
-             # "train_loss": train_epoch_loss / len(train_set),
-             # "train_mask": train_epoch_mask_loss / len(train_set),
-             # "train_pixelwise": train_epoch_pix_loss / len(train_set),
-             # "train_perceptual": train_epoch_perc_loss / len(train_set)  # 记录train_epoch的各种参数
+             # "train_loss": train_epoch_loss / (len(train_set)*16),
+             # "train_mask": train_epoch_mask_loss / (len(train_set)*16),
+             # "train_pixelwise": train_epoch_pix_loss / (len(train_set)*16),
+             # "train_perceptual": train_epoch_perc_loss / (len(train_set)*16),  
+             # "train_epoch_loss": train_epoch_loss,
+             # "train_epoch_mask": train_epoch_mask_loss,
+             # "train_epoch_pixelwise": train_epoch_pix_loss,
+             # "train_epoch_perceptual": train_epoch_perc_loss  
          # })
 
         scheduler.step()

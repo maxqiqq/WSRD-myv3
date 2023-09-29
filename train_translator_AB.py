@@ -130,11 +130,11 @@ if __name__ == '__main__':
             from PIL import Image
             from torchvision import transforms
             # 遍历每一批中的每一张图像
-                for j in range(B_img.size(0)):
-                    # 获取当前图像
-                    B_img_j = B_img[j]
-                    AB_mask_j = AB_mask[j]
-                    A_img_j = A_img[j]
+            for j in range(B_img.size(0)):
+                # 获取当前图像
+                B_img_j = B_img[j]
+                AB_mask_j = AB_mask[j]
+                A_img_j = A_img[j]
 
                     # 将图像分割为 16 个 512x512 的块
                     for m in range(4):

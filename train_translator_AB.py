@@ -3,23 +3,25 @@ import torch
 from dconv_model import DistillNet
 from ImageLoaders import PairedImageSet
 from loss import PerceptualLossModule
-from torch.nn.functional import interpolate  
+# from torch.nn.functional import interpolate
 from torch.optim.lr_scheduler import MultiStepLR  
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
-from utils import analyze_image_pair, compute_shadow_mask_otsu 
+from utils import analyze_image_pair, analyze_image_pair_rgb, compute_shadow_mask_otsu
 import os  
 import gc
 from PIL import Image
 from torchvision import transforms
+
+# import wandb
+# wandb.init(project="WSRD-myversion-v2")
 
 os.environ['TORCH_HOME'] = "./loaded_models/"
 
 if __name__ == '__main__':
     # parse CLI arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
-
+    # parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
     parser.add_argument("--n_epochs", type=int, default=15, help="number of epochs of training")
     parser.add_argument("--resume_epoch", type=int, default=1, help="epoch to resume training")  # 重载训练，从之前中断处接着
     parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
@@ -192,99 +194,92 @@ if __name__ == '__main__':
         scheduler.step()
       
         if (epoch + 1) % opt.valid_checkpoint == 0 or epoch in [0, 1]:
-           with torch.no_grad():
+            with torch.no_grad():
                 translator = translator.eval()
-    
-                if (epoch + 1) % opt.save_checkpoint == 0:  
-                    os.makedirs("{}/{}".format(opt.image_dir, epoch + 1))  
-               
+
+                if (epoch + 1) % opt.save_checkpoint == 0:
+                    os.makedirs("{}/{}".format(opt.image_dir, epoch + 1))
+
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
-                    inp = A_img.type(Tensor)
-                    gt = B_img.type(Tensor)
-                    mask = AB_mask.type(Tensor)
+                    # 遍历每一批中的每一张图像
+                    for j in range(B_img.size(0)):
+                        # 获取当前图像
+                        B_img_j = B_img[j]
+                        AB_mask_j = AB_mask[j]
+                        A_img_j = A_img[j]
 
-                    if epoch > 0:
-                        if opt.fullres == 0:
-                            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                                out = translator(inp, mask)
-                        else:
-                            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                                b, c, h, w = inp.shape
-                                target_size = (960, 1280)  # ？？？这个可以改吗
-                                res_inp = interpolate(inp, target_size, mode='bicubic')  # resize
-                                res_mask = interpolate(mask, target_size, mode='nearest')
+                        # 将图像分割为 16 个 512x512 的块
+                        for m in range(4):
+                            for n in range(4):
+                                left = n * 512
+                                upper = m * 512
+                                right = (n + 1) * 512
+                                lower = (m + 1) * 512
 
-                                dsz_out = translator(res_inp, res_mask)  
-                                out = interpolate(dsz_out, (h, w), mode='bicubic')
-                    else:
-                        out = inp
-                   
-                    synthetic_mask = compute_shadow_mask_otsu(inp, out)
+                                gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
+                                mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
+                                inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
 
-                    mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                                # 将每个块送入网络模型进行训练,输出结果
+                                optimizer_G.zero_grad()
+                                with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                                    out = translator(inp, mask)
 
-                    loss_pixel = criterion_pixelwise(out, gt)
-                    perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                                if (epoch + 1) % opt.save_checkpoint == 0:
+                                    out_img = transforms.ToPILImage(out)
+                                    A_img_name = A_img_j.split('.')[0]
+                                    # 保存图像到文件
+                                    out_img.save(
+                                        "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch + 1, A_img_name, m, n))
 
-                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss
+                                    # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
+                                    # if m == 3 and n == 3:
 
-                    valid_epoch_loss += loss_G.detach().item()
-                    valid_mask_loss += mask_loss.detach()
-                    valid_pix_loss += loss_pixel.detach()
-                    valid_perc_loss += perceptual_loss.detach()
+                                # 模仿源文件，设计一系列loss计算
+                                synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
+                                mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                                loss_pixel = criterion_pixelwise(out, gt)
+                                perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                                loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
-                    rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
+                                rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
+                                re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
 
-                    re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
-              
-                    epoch_err += re
+                                # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
+                                valid_epoch_loss += loss_G.detach().item()
+                                valid_mask_loss += mask_loss.detach()
+                                valid_pix_loss += loss_pixel.detach()
+                                valid_perc_loss += perceptual_loss.detach()
 
-                    rmse_epoch += rmse
-                    psnr_epoch += psnr
+                                epoch_err += re
+                                rmse_epoch += rmse
+                                psnr_epoch += psnr
 
-                    if (epoch + 1) % opt.save_checkpoint == 0:
-                        # 检验下一个epoch是否是save point
-                        img_synth = out.detach().data
-                        img_real = inp.detach().data
-                        img_gt = gt.detach().data
-                        img_sample = torch.cat((img_real, img_synth, img_gt), dim=-1)
-                        save_image(img_sample, "{}/{}/{}_im.png".format(opt.image_dir, epoch + 1, idx + 1))
-                        mask_sample = torch.cat((mask, compute_shadow_mask_otsu(inp, out)), dim=-1)
-                        save_image(mask_sample, "{}/{}/{}_mask.png".format(opt.image_dir, epoch + 1, idx + 1))
-
-                # wandb.log({  # 记录下该epoch evaluate结果
-                #      "valid_loss": valid_epoch_loss / len(validation_set),
-                #      "valid_mask": valid_mask_loss / len(validation_set),
-                #      "valid_pixelwise": valid_pix_loss / len(validation_set),
-                #      "valid_perceptual": valid_perc_loss / len(validation_set)
-                # })
-
-                translator_valid_loss.append(valid_epoch_loss)
-                translator_valid_mask_loss.append(valid_mask_loss)
-
-                epoch_err /= val_samples  # /=意为左➗右再赋值给左
-
-                rmse_epoch /= val_samples
-            
-                psnr_epoch /= val_samples
-               
             # wandb.log({
-            #     "rmse": lab_rmse_epoch,
-            #     "sh_rmse": lab_shrmse_epoch,
-            #     "sf_rmse": lab_frmse_epoch,
-            #
+            #      "valid_loss": valid_epoch_loss / (len(validation_set)*16),
+            #      "valid_mask": valid_mask_loss / (len(validation_set)*16),
+            #      "valid_pixelwise": valid_pix_loss / (len(validation_set)*16),
+            #      "valid_perceptual": valid_perc_loss / (len(validation_set)*16),
+            #      "valid_epoch_loss": valid_epoch_loss,
+            #      "valid_epoch_mask": valid_mask_loss,
+            #      "valid_epoch_pixelwise": valid_pix_loss,
+            #      "valid_epoch_perceptual": valid_perc_loss,
+            #      "epoch_err_avg":  epoch_err / (len(validation_set)*16),
+            #      "rmse_epoch_avg":  rmse_epoch / (len(validation_set)*16),
+            #      "psnr_epoch_avg":  psnr_epoch / (len(validation_set)*16)
             # })
 
             print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} - PSNR - {}".format(
-                                                                                    epoch, train_epoch_loss,
-                                                                                    valid_epoch_loss, train_epoch_mask_loss,
-                                                                                    valid_mask_loss,
-                                                                                    rmse_epoch,  # lab_rmse_epoch,
-                                                                                    # lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                    psnr_epoch)) # lab_psnr_epoch))
-                                                                                    # lab_shpsnr_epoch, lab_fpsnr_epoch))
-            if rmse_epoch < best_rmse and epoch > 0:
-                best_rmse = rmse_epoch
-                print("Saving checkpoint for {}".format(best_rmse))
-                torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))
-                torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))
+                                                                                        epoch, train_epoch_loss,
+                                                                                        valid_epoch_loss, train_epoch_mask_loss,
+                                                                                        valid_mask_loss,
+                                                                                        rmse_epoch,  # lab_rmse_epoch,
+                                                                                        # lab_shrmse_epoch, lab_frmse_epoch,
+                                                                                        psnr_epoch)) # lab_psnr_epoch))
+                                                                                        # lab_shpsnr_epoch, lab_fpsnr_epoch))
+            rmse_epoch_avg = rmse_epoch / (len(validation_set)*16)
+            if rmse_epoch_avg < best_rmse and epoch > 0:
+                    best_rmse = rmse_epoch_avg
+                    print("Saving checkpoint for {}".format(best_rmse))
+                    torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))
+                    torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))

@@ -148,9 +148,12 @@ if __name__ == '__main__':
                         right = (n + 1) * 512
                         lower = (m + 1) * 512
 
-                        gt = B_img_j[:, upper:lower, left:right]
-                        mask = AB_mask_j[:, upper:lower, left:right]
-                        inp = A_img_j[:, upper:lower, left:right]
+                        gt = B_img_j[:, :, upper:lower, left:right]
+                        mask = AB_mask_j[:, :, upper:lower, left:right]
+                        inp = A_img_j[:, :, upper:lower, left:right]
+                        # print("gt shape: ", gt.shape)
+                        # print("mask shape: ", mask.shape)
+                        # print("inp shape: ", inp.shape)
                         # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
                         # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
                         # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))

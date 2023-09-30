@@ -108,7 +108,8 @@ if __name__ == '__main__':
     # translator_valid_perc_loss = []
 
     best_rmse = 1e3
-
+    mask_weight = 0.05
+    
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
         train_epoch_pix_loss = 0
@@ -169,7 +170,7 @@ if __name__ == '__main__':
                     mask_loss = criterion_pixelwise(synthetic_mask, mask)
                     loss_pixel = criterion_pixelwise(out, gt)
                     perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
+                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + mask_weight * mask_loss
 
                     # 计算/累积梯度
                     loss_G.backward()
@@ -256,7 +257,7 @@ if __name__ == '__main__':
                             mask_loss = criterion_pixelwise(synthetic_mask, mask)
                             loss_pixel = criterion_pixelwise(out, gt)
                             perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
+                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + mask_weight * mask_loss
 
                             rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
                             re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))

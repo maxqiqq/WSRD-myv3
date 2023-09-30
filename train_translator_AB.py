@@ -130,7 +130,9 @@ if __name__ == '__main__':
         translator = translator.train()
 
         for i, (B_img, AB_mask, A_img) in enumerate(dataloader):  # i其实表示的是第几批batch，从0开始
-            
+            B_img = B_img.to(device)
+            AB_mask = AB_mask.to(device)
+            A_img = A_img.to(device)
             # 遍历每一批中的每一张图像
             for j in range(B_img.size(0)):
                 # 获取当前图像

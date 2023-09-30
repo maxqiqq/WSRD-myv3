@@ -206,6 +206,9 @@ if __name__ == '__main__':
                     os.makedirs("{}/{}".format(opt.image_dir, epoch + 1))
 
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
+                    B_img = B_img.to(device)
+                    AB_mask = AB_mask.to(device)
+                    A_img = A_img.to(device)
                     # 遍历每一批中的每一张图像
                     for j in range(B_img.size(0)):
                         # 获取当前图像

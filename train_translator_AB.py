@@ -133,6 +133,10 @@ if __name__ == '__main__':
             B_img = B_img.to(device)
             AB_mask = AB_mask.to(device)
             A_img = A_img.to(device)
+            print("B_img: ", B_img.shape)
+            print("AB_mask: ", AB_mask.shape)
+            print("A_img: ", A_img.shape)
+            
             # 遍历每一批中的每一张图像
             for j in range(B_img.size(0)):
                 # 获取当前图像
@@ -151,9 +155,7 @@ if __name__ == '__main__':
                         gt = B_img_j[:, :, upper:lower, left:right]
                         mask = AB_mask_j[:, :, upper:lower, left:right]
                         inp = A_img_j[:, :, upper:lower, left:right]
-                        # print("gt shape: ", gt.shape)
-                        # print("mask shape: ", mask.shape)
-                        # print("inp shape: ", inp.shape)
+                        
                         # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
                         # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
                         # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))

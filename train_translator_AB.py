@@ -145,40 +145,40 @@ if __name__ == '__main__':
             #     print("A_img: ", A_img.shape)
                 
                 # 将图像分割为 16 个 512x512 的块
-                for m in range(4):
-                    for n in range(4):
-                        left = n * 512
-                        upper = m * 512
-                        right = (n + 1) * 512
-                        lower = (m + 1) * 512
+            for m in range(4):
+                for n in range(4):
+                    left = n * 512
+                    upper = m * 512
+                    right = (n + 1) * 512
+                    lower = (m + 1) * 512
 
-                        gt = B_img[:, :, upper:lower, left:right]
-                        mask = AB_mask[:, :, upper:lower, left:right]
-                        inp = A_img[:, :, upper:lower, left:right]
+                    gt = B_img[:, :, upper:lower, left:right]
+                    mask = AB_mask[:, :, upper:lower, left:right]
+                    inp = A_img[:, :, upper:lower, left:right]
+                    
+                    # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
+                    # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
+                    # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
+
+                    # 将每个块送入网络模型进行训练,输出结果     
+                    optimizer_G.zero_grad()  
+                    out = translator(inp, mask)
                         
-                        # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
-                        # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
-                        # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
+                    # 模仿源文件，设计一系列loss计算
+                    synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
+                    mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                    loss_pixel = criterion_pixelwise(out, gt)
+                    perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
-                        # 将每个块送入网络模型进行训练,输出结果     
-                        optimizer_G.zero_grad()  
-                        out = translator(inp, mask)
-                            
-                        # 模仿源文件，设计一系列loss计算
-                        synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
-                        mask_loss = criterion_pixelwise(synthetic_mask, mask)
-                        loss_pixel = criterion_pixelwise(out, gt)
-                        perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                        loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
-
-                        # 计算/累积梯度
-                        loss_G.backward()
-                            
-                        # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
-                        train_epoch_loss += loss_G.detach().item()
-                        train_epoch_pix_loss += loss_pixel.detach().item()
-                        train_epoch_perc_loss += perceptual_loss.detach().item()
-                        train_epoch_mask_loss += mask_loss.detach().item()
+                    # 计算/累积梯度
+                    loss_G.backward()
+                        
+                    # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
+                    train_epoch_loss += loss_G.detach().item()
+                    train_epoch_pix_loss += loss_pixel.detach().item()
+                    train_epoch_perc_loss += perceptual_loss.detach().item()
+                    train_epoch_mask_loss += mask_loss.detach().item()
 
             # 一个batch后更新模型参数
             optimizer_G.step()   
@@ -222,54 +222,54 @@ if __name__ == '__main__':
                     #     A_img_j = A_img[j]
 
                         # 将图像分割为 16 个 512x512 的块
-                        for m in range(4):
-                            for n in range(4):
-                                left = n * 512
-                                upper = m * 512
-                                right = (n + 1) * 512
-                                lower = (m + 1) * 512
+                    for m in range(4):
+                        for n in range(4):
+                            left = n * 512
+                            upper = m * 512
+                            right = (n + 1) * 512
+                            lower = (m + 1) * 512
 
-                                gt = B_img[:, :, upper:lower, left:right]
-                                mask = AB_mask[:, :, upper:lower, left:right]
-                                inp = A_img[:, :, upper:lower, left:right]
-                                # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
-                                # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
-                                # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
+                            gt = B_img[:, :, upper:lower, left:right]
+                            mask = AB_mask[:, :, upper:lower, left:right]
+                            inp = A_img[:, :, upper:lower, left:right]
+                            # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
+                            # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
+                            # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
 
-                                # 将每个块送入网络模型进行训练,输出结果
-                                optimizer_G.zero_grad()
-                                with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                                    out = translator(inp, mask)
+                            # 将每个块送入网络模型进行训练,输出结果
+                            optimizer_G.zero_grad()
+                            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                                out = translator(inp, mask)
 
-                                if (epoch + 1) % opt.save_checkpoint == 0:
-                                    out_img = transforms.ToPILImage(out)
-                                    A_img_name = A_img.split('.')[0]
-                                    # 保存图像到文件
-                                    out_img.save(
-                                        "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch + 1, A_img_name, m, n))
+                            if (epoch + 1) % opt.save_checkpoint == 0:
+                                out_img = transforms.ToPILImage(out)
+                                A_img_name = A_img.split('.')[0]
+                                # 保存图像到文件
+                                out_img.save(
+                                    "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch + 1, A_img_name, m, n))
 
-                                    # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
-                                    # if m == 3 and n == 3:
+                                # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
+                                # if m == 3 and n == 3:
 
-                                # 模仿源文件，设计一系列loss计算
-                                synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
-                                mask_loss = criterion_pixelwise(synthetic_mask, mask)
-                                loss_pixel = criterion_pixelwise(out, gt)
-                                perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                                loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
+                            # 模仿源文件，设计一系列loss计算
+                            synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
+                            mask_loss = criterion_pixelwise(synthetic_mask, mask)
+                            loss_pixel = criterion_pixelwise(out, gt)
+                            perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
+                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
-                                rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
-                                re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
+                            rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
+                            re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
 
-                                # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
-                                valid_epoch_loss += loss_G.detach().item()
-                                valid_mask_loss += mask_loss.detach()
-                                valid_pix_loss += loss_pixel.detach()
-                                valid_perc_loss += perceptual_loss.detach()
+                            # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
+                            valid_epoch_loss += loss_G.detach().item()
+                            valid_mask_loss += mask_loss.detach()
+                            valid_pix_loss += loss_pixel.detach()
+                            valid_perc_loss += perceptual_loss.detach()
 
-                                epoch_err += re
-                                rmse_epoch += rmse
-                                psnr_epoch += psnr
+                            epoch_err += re
+                            rmse_epoch += rmse
+                            psnr_epoch += psnr
 
             # wandb.log({
             #      "valid_loss": valid_epoch_loss / (len(validation_set)*16),

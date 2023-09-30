@@ -148,14 +148,14 @@ class PairedImageSet(data.Dataset):
         #     inp_data = self.resize(inp_data)
         # print(inp_data.mode)
 
-        # tensor_gt = self.to_tensor(gt_data)
-        # tensor_msk = self.to_tensor(smat_data)
-        # tensor_inp = self.to_tensor(inp_data)
+        tensor_gt = self.to_tensor(gt_data)
+        tensor_msk = self.to_tensor(smat_data)
+        tensor_inp = self.to_tensor(inp_data)
         # 从下往上找，确认三个data的路径地址，这样方便自己布置相似文件结构
         # smat_path_dir = path/type/type_B = masks_path = AB_img
         # clean_path_dir = path/type/type_C = gt_images_path = B_img
         # orig_path_dir = path/type/type_A = inp_images_path = A_img
-        return gt_data, smat_data, inp_data
+        return tensor_gt, tensor_msk, tensor_inp
 
 
 

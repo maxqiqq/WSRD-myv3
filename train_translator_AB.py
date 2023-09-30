@@ -133,17 +133,17 @@ if __name__ == '__main__':
             B_img = B_img.to(device)
             AB_mask = AB_mask.to(device)
             A_img = A_img.to(device)
-            print("B_img: ", B_img.shape)
-            print("AB_mask: ", AB_mask.shape)
-            print("A_img: ", A_img.shape)
             
-            # 遍历每一批中的每一张图像
-            for j in range(B_img.size(0)):
-                # 获取当前图像
-                B_img_j = B_img[j]
-                AB_mask_j = AB_mask[j]
-                A_img_j = A_img[j]
-
+            # # 遍历每一批中的每一张图像
+            # for j in range(B_img.size(0)):
+            #     # 获取当前图像
+            #     B_img_j = B_img[j]
+            #     AB_mask_j = AB_mask[j]
+            #     A_img_j = A_img[j]
+            #     print("B_img: ", B_img.shape)
+            #     print("AB_mask: ", AB_mask.shape)
+            #     print("A_img: ", A_img.shape)
+                
                 # 将图像分割为 16 个 512x512 的块
                 for m in range(4):
                     for n in range(4):
@@ -152,13 +152,13 @@ if __name__ == '__main__':
                         right = (n + 1) * 512
                         lower = (m + 1) * 512
 
-                        gt = B_img_j[:, :, upper:lower, left:right]
-                        mask = AB_mask_j[:, :, upper:lower, left:right]
-                        inp = A_img_j[:, :, upper:lower, left:right]
+                        gt = B_img[:, :, upper:lower, left:right]
+                        mask = AB_mask[:, :, upper:lower, left:right]
+                        inp = A_img[:, :, upper:lower, left:right]
                         
-                        # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
-                        # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
-                        # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
+                        # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
+                        # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
+                        # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
 
                         # 将每个块送入网络模型进行训练,输出结果     
                         optimizer_G.zero_grad()  
@@ -214,12 +214,12 @@ if __name__ == '__main__':
                     B_img = B_img.to(device)
                     AB_mask = AB_mask.to(device)
                     A_img = A_img.to(device)
-                    # 遍历每一批中的每一张图像
-                    for j in range(B_img.size(0)):
-                        # 获取当前图像
-                        B_img_j = B_img[j]
-                        AB_mask_j = AB_mask[j]
-                        A_img_j = A_img[j]
+                    # # 遍历每一批中的每一张图像
+                    # for j in range(B_img.size(0)):
+                    #     # 获取当前图像
+                    #     B_img_j = B_img[j]
+                    #     AB_mask_j = AB_mask[j]
+                    #     A_img_j = A_img[j]
 
                         # 将图像分割为 16 个 512x512 的块
                         for m in range(4):
@@ -229,12 +229,12 @@ if __name__ == '__main__':
                                 right = (n + 1) * 512
                                 lower = (m + 1) * 512
 
-                                gt = B_img_j[:, upper:lower, left:right]
-                                mask = AB_mask_j[:, upper:lower, left:right]
-                                inp = A_img_j[:, upper:lower, left:right]
-                                # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
-                                # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
-                                # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
+                                gt = B_img[:, :, upper:lower, left:right]
+                                mask = AB_mask[:, :, upper:lower, left:right]
+                                inp = A_img[:, :, upper:lower, left:right]
+                                # gt = transforms.ToTensor(B_img.crop((left, upper, right, lower)))
+                                # mask = transforms.ToTensor(AB_mask.crop((left, upper, right, lower)))
+                                # inp = transforms.ToTensor(A_img.crop((left, upper, right, lower)))
 
                                 # 将每个块送入网络模型进行训练,输出结果
                                 optimizer_G.zero_grad()
@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
                                 if (epoch + 1) % opt.save_checkpoint == 0:
                                     out_img = transforms.ToPILImage(out)
-                                    A_img_name = A_img_j.split('.')[0]
+                                    A_img_name = A_img.split('.')[0]
                                     # 保存图像到文件
                                     out_img.save(
                                         "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch + 1, A_img_name, m, n))

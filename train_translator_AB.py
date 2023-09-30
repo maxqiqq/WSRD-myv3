@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
                             # 将每个块送入网络模型进行训练,输出结果
                             optimizer_G.zero_grad()
-                            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+                            with torch.autocast(device_type="cuda", dtype=torch.float16):
                                 out = translator(inp, mask)
 
                             if (epoch + 1) % opt.save_checkpoint == 0:

@@ -146,9 +146,12 @@ if __name__ == '__main__':
                         right = (n + 1) * 512
                         lower = (m + 1) * 512
 
-                        gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
-                        mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
-                        inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
+                        gt = B_img_j[:, upper:lower, left:right]
+                        mask = AB_mask_j[:, upper:lower, left:right]
+                        inp = A_img_j[:, upper:lower, left:right]
+                        # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
+                        # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
+                        # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
 
                         # 将每个块送入网络模型进行训练,输出结果     
                         optimizer_G.zero_grad()  
@@ -216,9 +219,12 @@ if __name__ == '__main__':
                                 right = (n + 1) * 512
                                 lower = (m + 1) * 512
 
-                                gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
-                                mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
-                                inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
+                                gt = B_img_j[:, upper:lower, left:right]
+                                mask = AB_mask_j[:, upper:lower, left:right]
+                                inp = A_img_j[:, upper:lower, left:right]
+                                # gt = transforms.ToTensor(B_img_j.crop((left, upper, right, lower)))
+                                # mask = transforms.ToTensor(AB_mask_j.crop((left, upper, right, lower)))
+                                # inp = transforms.ToTensor(A_img_j.crop((left, upper, right, lower)))
 
                                 # 将每个块送入网络模型进行训练,输出结果
                                 optimizer_G.zero_grad()

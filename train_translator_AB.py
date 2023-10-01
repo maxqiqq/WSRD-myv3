@@ -12,6 +12,7 @@ import os
 import gc
 from PIL import Image
 from torchvision import transforms
+import numpy as np
 
 # import wandb
 # wandb.init(project="WSRD-myversion-v2")
@@ -325,19 +326,18 @@ if __name__ == '__main__':
             # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
             if epoch == opt.n_epochs:
-            import numpy as np
-            np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
-            np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
-            np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
-            np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
+                np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
+                np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
+                np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
+                np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
+    
+                np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
+                np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
+                np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
+                np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
+                np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
 
-            np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
-            np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
-            np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
-            np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
-            np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
-
-            with open('./logs/config/hyperparameters.txt', 'w') as f:
-                f.write(str(opt))
+                with open('./logs/config/hyperparameters.txt', 'w') as f:
+                    f.write(str(opt))
             
 

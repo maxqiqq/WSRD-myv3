@@ -278,7 +278,7 @@ if __name__ == '__main__':
             rmse_epoch /= val_samples
             psnr_epoch /= val_samples
             
-            translator_valid_error.append（(epoch_err, rmse_epoch, psnr_epoch)）
+            translator_valid_error.append((epoch_err, rmse_epoch, psnr_epoch))
             translator_valid_loss.append(valid_epoch_loss)
             translator_valid_mask_loss.append(valid_mask_loss)
             translator_valid_pix_loss.append(valid_pix_loss)

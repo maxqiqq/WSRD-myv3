@@ -204,12 +204,14 @@ if __name__ == '__main__':
 
         scheduler.step()
       
-        if (epoch + 1) % opt.valid_checkpoint == 0 or epoch in [0, 1]:
+        # if (epoch + 1) % opt.valid_checkpoint == 0 or epoch in [0, 1]:
+        if epoch % opt.valid_checkpoint == 0 or epoch in [0, 1]:
             with torch.no_grad():
                 translator = translator.eval()
 
-                if (epoch + 1) % opt.save_checkpoint == 0:
-                    os.makedirs("{}/{}".format(opt.image_dir, epoch + 1))
+                # if (epoch + 1) % opt.save_checkpoint == 0:
+                if epoch % opt.save_checkpoint == 0:
+                    os.makedirs("{}/{}".format(opt.image_dir, epoch))
 
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
                     B_img = B_img.to(device)
@@ -242,12 +244,13 @@ if __name__ == '__main__':
                             with torch.autocast(device_type="cuda", dtype=torch.float16):
                                 out = translator(inp, mask)
 
-                            if (epoch + 1) % opt.save_checkpoint == 0:
+                            # if (epoch + 1) % opt.save_checkpoint == 0:
+                            if epoch % opt.save_checkpoint == 0:
                                 out_img = transforms.ToPILImage(out)
                                 A_img_name = A_img.split('.')[0]
                                 # 保存图像到文件
                                 out_img.save(
-                                    "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch + 1, A_img_name, m, n))
+                                    "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch, A_img_name, m, n))
 
                                 # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                 # if m == 3 and n == 3:

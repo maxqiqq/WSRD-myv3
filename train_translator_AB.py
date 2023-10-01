@@ -324,7 +324,7 @@ if __name__ == '__main__':
             # torch.save(translator.cpu().state_dict(), "./logs/model/distillnet_epoch{}.pth".format(epoch))
             # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
-            if epoch = opt.n_epochs:
+            if epoch == opt.n_epochs:
             import numpy as np
             np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
             np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))

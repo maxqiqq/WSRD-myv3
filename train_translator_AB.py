@@ -192,10 +192,10 @@ if __name__ == '__main__':
 
         
         # wandb.log({
-             # "train_loss": train_epoch_loss / (len(train_set)*16),
-             # "train_mask": train_epoch_mask_loss / (len(train_set)*16),
-             # "train_pixelwise": train_epoch_pix_loss / (len(train_set)*16),
-             # "train_perceptual": train_epoch_perc_loss / (len(train_set)*16),  
+             # "train_epoch_loss_avg": train_epoch_loss / len(train_set),
+             # "train_epoch_mask_avg": train_epoch_mask_loss / len(train_set),
+             # "train_epoch_pixelwise_avg": train_epoch_pix_loss / len(train_set),
+             # "train_epoch_perceptual_avg": train_epoch_perc_loss / len(train_set),  
              # "train_epoch_loss": train_epoch_loss,
              # "train_epoch_mask": train_epoch_mask_loss,
              # "train_epoch_pixelwise": train_epoch_pix_loss,
@@ -264,6 +264,8 @@ if __name__ == '__main__':
 
                             rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
                             re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
+                            # 在 analyze_image_pair 函数中，输入的图像数据被假定为在 [0, 1] 范围内，这是因为在许多深度学习框架中，图像数据通常被归一化到这个范围。因此，计算 PSNR 时使用的最大可能像素值是 1。
+                            # 而在 analyze_image_pair_rgb 函数中，输入的图像数据被乘以 255，这意味着这个函数假定输入数据在 [0, 255] 范围内，这是一个未归一化的 RGB 图像的典型范围。因此，计算 PSNR 时使用的最大可能像素值是 255。
 
                             # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
                             valid_epoch_loss += loss_G.detach().item()
@@ -276,17 +278,17 @@ if __name__ == '__main__':
                             psnr_epoch += psnr
 
             # wandb.log({
-            #      "valid_loss": valid_epoch_loss / (len(validation_set)*16),
-            #      "valid_mask": valid_mask_loss / (len(validation_set)*16),
-            #      "valid_pixelwise": valid_pix_loss / (len(validation_set)*16),
-            #      "valid_perceptual": valid_perc_loss / (len(validation_set)*16),
+            #      "valid_epoch_loss_avg": valid_epoch_loss / len(validation_set),
+            #      "valid_epoch_mask_avg": valid_mask_loss / len(validation_set),
+            #      "valid_epoch_pixelwise_avg": valid_pix_loss / len(validation_set),
+            #      "valid_epoch_perceptual_avg": valid_perc_loss / len(validation_set),
             #      "valid_epoch_loss": valid_epoch_loss,
             #      "valid_epoch_mask": valid_mask_loss,
             #      "valid_epoch_pixelwise": valid_pix_loss,
             #      "valid_epoch_perceptual": valid_perc_loss,
-            #      "epoch_err_avg":  epoch_err / (len(validation_set)*16),
-            #      "rmse_epoch_avg":  rmse_epoch / (len(validation_set)*16),
-            #      "psnr_epoch_avg":  psnr_epoch / (len(validation_set)*16)
+            #      "epoch_err_avg":  epoch_err / len(validation_set),
+            #      "rmse_epoch_avg":  rmse_epoch / len(validation_set),
+            #      "psnr_epoch_avg":  psnr_epoch / len(validation_set)
             # })
 
             print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} - PSNR - {}".format(

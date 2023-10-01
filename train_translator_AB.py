@@ -258,7 +258,7 @@ if __name__ == '__main__':
                             mask_loss = criterion_pixelwise(synthetic_mask, mask)
                             loss_pixel = criterion_pixelwise(out, gt)
                             perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + mask_weight * mask_loss
+                            loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
                             rmse, psnr = analyze_image_pair_rgb(out.squeeze(0), gt.squeeze(0))
                             re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))

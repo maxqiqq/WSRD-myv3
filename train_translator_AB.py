@@ -21,7 +21,7 @@ os.environ['TORCH_HOME'] = "./loaded_models/"
 if __name__ == '__main__':
     # parse CLI arguments
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--fullres", type=int, default=1, help="[0]inference with hxwx3 [1]fullres inference")
+    parser.add_argument("--model_type", type=int, default=1, help="[0]UNet [1]DistillNet")
     parser.add_argument("--n_epochs", type=int, default=15, help="number of epochs of training")
     parser.add_argument("--resume_epoch", type=int, default=1, help="epoch to resume training")  # 重载训练，从之前中断处接着
     parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
@@ -43,12 +43,12 @@ if __name__ == '__main__':
 
     parser.add_argument("--valid_checkpoint", type=int, default=1, help="checkpoint for validation")
     parser.add_argument("--save_checkpoint", type=int, default=2, help="checkpoint for visual inspection")
-    parser.add_argument("--model_dir", default="./model",
-                        help="Path of destination directory for the trained models")  # 保存训练模型
     parser.add_argument("--image_dir", default="./savepoint_gallery",
                         help="Path for the directory used to save the output test images")
+    parser.add_argument("--mask_weight", type=float, default=0.05, help="mask loss weight")
+    parser.add_argument("--best_rmse", type=int, default=1e3, help="best rmse")
+    # loss.py中的def compute_perceptual_loss_v(self, synthetic, real):其中三大部分前面的weight也可以更改
     opt = parser.parse_args()
-    print(opt)  
 
     print('CUDA: ', torch.cuda.is_available(), torch.cuda.device_count())
 
@@ -57,8 +57,12 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    translator = DistillNet(num_iblocks=6, num_ops=4)
-    translator = translator.to(device)
+    if opt.model_type == 0:  # 根据上面参数设定0为UNet
+        translator = UNetTranslator(in_channels=3, out_channels=3)
+        translator.apply(weights_init_normal)
+    else:
+        translator = DistillNet(num_iblocks=6, num_ops=4)
+        translator = translator.to(device)
       
     print("USING CUDA FOR MODEL TRAINING")
     translator.cuda()
@@ -90,22 +94,19 @@ if __name__ == '__main__':
         shuffle=False,
         num_workers=opt.n_cpu
     )
-
     num_samples = len(dataloader)
     val_samples = len(val_dataloader)
    
     
-    # translator_train_loss = []  
-    # translator_valid_loss = []
-
-    # translator_train_mask_loss = []
-    # translator_valid_mask_loss = []
-
-    # translator_train_pix_loss = []
-    # translator_valid_pix_loss = []
-
-    # translator_train_perc_loss = []
-    # translator_valid_perc_loss = []
+    translator_train_loss = []  
+    translator_valid_loss = []
+    translator_train_mask_loss = []
+    translator_valid_mask_loss = []
+    translator_train_pix_loss = []
+    translator_valid_pix_loss = []
+    translator_train_perc_loss = []
+    translator_valid_perc_loss = []
+    translator_valid_error = []
 
     best_rmse = 1e3
     mask_weight = 0.05
@@ -170,7 +171,7 @@ if __name__ == '__main__':
                     mask_loss = criterion_pixelwise(synthetic_mask, mask)
                     loss_pixel = criterion_pixelwise(out, gt)
                     perceptual_loss = pl.compute_perceptual_loss_v(out.detach(), gt.detach())
-                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + mask_weight * mask_loss
+                    loss_G = opt.pixelwise_weight * loss_pixel + opt.perceptual_weight * perceptual_loss + opt.mask_weight * mask_loss
 
                     # 计算/累积梯度
                     loss_G.backward()
@@ -185,11 +186,10 @@ if __name__ == '__main__':
             optimizer_G.step()   
             # 如果你是在每个小块上计算损失，那么你应该在处理完一个batch的所有小块后，再进行权重的更新。也就是说，你先计算出一个batch中所有小块的损失，然后将这些损失加起来得到整个batch的总损失，最后根据这个总损失来更新权重。
         
-        # translator_train_loss.append(train_epoch_loss)             # 空列表train_epoch_loss最终会print出来
-        # translator_train_mask_loss.append(train_epoch_mask_loss)   # 每个训练周期的总损失，而不是平均损失，可以帮助我们更好地理解模型在整个训练周期中的表现，而不仅仅是单个样本的表现。
-        # translator_train_perc_loss.append(train_epoch_perc_loss)   # 完全的数据转移，没用；我都保存到wandb里面，注释了之前的设置
-        # translator_train_pix_loss.append(train_epoch_pix_loss)
-
+        translator_train_loss.append(train_epoch_loss)             # 空列表train_epoch_loss最终会print出来
+        translator_train_mask_loss.append(train_epoch_mask_loss)   # 每个训练周期的总损失，而不是平均损失，可以帮助我们更好地理解模型在整个训练周期中的表现，而不仅仅是单个样本的表现。
+        translator_train_perc_loss.append(train_epoch_perc_loss)   # 完全的数据转移，没用；我都保存到wandb里面，注释了之前的设置
+        translator_train_pix_loss.append(train_epoch_pix_loss)
         
         # wandb.log({
              # "train_epoch_loss_avg": train_epoch_loss / len(train_set),
@@ -277,6 +277,16 @@ if __name__ == '__main__':
                             rmse_epoch += rmse
                             psnr_epoch += psnr
 
+            epoch_err /= val_samples    # /=意为左➗右再赋值给左
+            rmse_epoch /= val_samples
+            psnr_epoch /= val_samples
+            
+            translator_valid_error.append（(epoch_err, rmse_epoch, psnr_epoch)）
+            translator_valid_loss.append(valid_epoch_loss)
+            translator_valid_mask_loss.append(valid_mask_loss)
+            translator_valid_pix_loss.append(valid_pix_loss)
+            translator_valid_perc_loss.append(valid_perc_loss)
+            
             # wandb.log({
             #      "valid_epoch_loss_avg": valid_epoch_loss / len(validation_set),
             #      "valid_epoch_mask_avg": valid_mask_loss / len(validation_set),
@@ -291,7 +301,7 @@ if __name__ == '__main__':
             #      "psnr_epoch_avg":  psnr_epoch / len(validation_set)
             # })
 
-            print("EPOCH: {} - GEN: {} | {} - MSK: {} | {} - RMSE {} - PSNR - {}".format(
+            print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
                                                                                         epoch, train_epoch_loss,
                                                                                         valid_epoch_loss, train_epoch_mask_loss,
                                                                                         valid_mask_loss,
@@ -302,13 +312,36 @@ if __name__ == '__main__':
             rmse_epoch /= val_samples
             if rmse_epoch < best_rmse and epoch > 1:  # >1是因为第一个epoch模型通常不好，不要保存
                     best_rmse = rmse_epoch
-                    print("Saving checkpoint for {}".format(best_rmse))
-                    torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))
-                    torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))
+                    print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
+                    torch.save(translator.cpu().state_dict(), "./best_rmse_model/best_distillnet_epoch{}.pth".format(epoch))
+                    torch.save(optimizer_G.state_dict(), "./best_rmse_model/best_optimizer_epoch{}.pth".format(epoch))
+                
+            # torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))：
+            # 将最佳模型的参数保存到文件 gen_sh2f.pth 中。这里的 translator.cpu().state_dict() 是一个字典，包含了模型的所有参数。
+            # translator.cpu() 是将模型的参数从 GPU 移动到 CPU，这样可以确保无论是否有 GPU，都能加载模型。
             
-# torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))：
-# 将最佳模型的参数保存到文件 gen_sh2f.pth 中。这里的 translator.cpu().state_dict() 是一个字典，包含了模型的所有参数。
-# translator.cpu() 是将模型的参数从 GPU 移动到 CPU，这样可以确保无论是否有 GPU，都能加载模型。
+            # torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))：
+            # 将优化器的状态也保存到文件 optimizer_ABG.pth 中。这样在以后加载模型时，可以恢复优化器的状态，继续训练。
 
-# torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))：
-# 将优化器的状态也保存到文件 optimizer_ABG.pth 中。这样在以后加载模型时，可以恢复优化器的状态，继续训练。
+            
+            # if epoch == 10 or epoch == opt.n_epochs:    模型保存，我的epoch太少了，之后正式弄的时候再写
+            # torch.save(translator.cpu().state_dict(), "./best_rmse_model/best_distillnet_epoch{}.pth".format(epoch))
+            # torch.save(optimizer_G.state_dict(), "./best_rmse_model/best_optimizer_epoch{}.pth".format(epoch))
+            
+            if epoch = opt.n_epochs:
+            import numpy as np
+            np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
+            np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
+            np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
+            np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
+
+            np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
+            np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
+            np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
+            np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
+            np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
+
+            with open('./logs/config/hyperparameters.txt', 'w') as f:
+                f.write(str(opt))
+            
+

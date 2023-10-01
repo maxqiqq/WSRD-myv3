@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
                 # if (epoch + 1) % opt.save_checkpoint == 0:
                 if epoch % opt.save_checkpoint == 0:
-                    os.makedirs("{}/{}".format(opt.image_dir, epoch))
+                    os.makedirs("{}/{}".format(opt.image_dir, epoch), exist_ok=True)
 
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
                     B_img = B_img.to(device)

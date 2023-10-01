@@ -107,9 +107,6 @@ if __name__ == '__main__':
     translator_train_perc_loss = []
     translator_valid_perc_loss = []
     translator_valid_error = []
-
-    best_rmse = 1e3
-    mask_weight = 0.05
     
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
@@ -296,9 +293,9 @@ if __name__ == '__main__':
             #      "valid_epoch_mask": valid_mask_loss,
             #      "valid_epoch_pixelwise": valid_pix_loss,
             #      "valid_epoch_perceptual": valid_perc_loss,
-            #      "epoch_err_avg":  epoch_err / len(validation_set),
-            #      "rmse_epoch_avg":  rmse_epoch / len(validation_set),
-            #      "psnr_epoch_avg":  psnr_epoch / len(validation_set)
+            #      "epoch_err_avg":  epoch_err,
+            #      "rmse_epoch_avg":  rmse_epoch,
+            #      "psnr_epoch_avg":  psnr_epoch
             # })
 
             print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
@@ -309,24 +306,23 @@ if __name__ == '__main__':
                                                                                         # lab_shrmse_epoch, lab_frmse_epoch,
                                                                                         psnr_epoch)) # lab_psnr_epoch))
                                                                                         # lab_shpsnr_epoch, lab_fpsnr_epoch))
-            rmse_epoch /= val_samples
+            
             if rmse_epoch < best_rmse and epoch > 1:  # >1是因为第一个epoch模型通常不好，不要保存
                     best_rmse = rmse_epoch
                     print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
-                    torch.save(translator.cpu().state_dict(), "./best_rmse_model/best_distillnet_epoch{}.pth".format(epoch))
-                    torch.save(optimizer_G.state_dict(), "./best_rmse_model/best_optimizer_epoch{}.pth".format(epoch))
+                    torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
+                    torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
                 
             # torch.save(translator.cpu().state_dict(), "{}/gen_sh2f.pth".format(opt.model_dir))：
             # 将最佳模型的参数保存到文件 gen_sh2f.pth 中。这里的 translator.cpu().state_dict() 是一个字典，包含了模型的所有参数。
-            # translator.cpu() 是将模型的参数从 GPU 移动到 CPU，这样可以确保无论是否有 GPU，都能加载模型。
-            
+            # translator.cpu() 是将模型的参数从 GPU 移动到 CPU，这样可以确保无论是否有 GPU，都能加载模型。     
             # torch.save(optimizer_G.state_dict(), "{}/optimizer_ABG.pth".format(opt.model_dir))：
             # 将优化器的状态也保存到文件 optimizer_ABG.pth 中。这样在以后加载模型时，可以恢复优化器的状态，继续训练。
 
             
             # if epoch == 10 or epoch == opt.n_epochs:    模型保存，我的epoch太少了，之后正式弄的时候再写
-            # torch.save(translator.cpu().state_dict(), "./best_rmse_model/best_distillnet_epoch{}.pth".format(epoch))
-            # torch.save(optimizer_G.state_dict(), "./best_rmse_model/best_optimizer_epoch{}.pth".format(epoch))
+            # torch.save(translator.cpu().state_dict(), "./logs/model/distillnet_epoch{}.pth".format(epoch))
+            # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
             if epoch = opt.n_epochs:
             import numpy as np

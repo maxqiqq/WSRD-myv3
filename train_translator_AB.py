@@ -311,7 +311,7 @@ if __name__ == '__main__':
             
             if rmse_epoch < best_rmse and epoch > 1:  # >1是因为第一个epoch模型通常不好，不要保存
                     best_rmse = rmse_epoch
-                    print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
+                    print("    \rSaving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
                     torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
                     torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
                 

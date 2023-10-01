@@ -79,7 +79,7 @@ if __name__ == '__main__':
     dataloader = DataLoader(
         train_set,  
         batch_size=opt.batch_size,
-        shuffle=True,  
+        shuffle=False,  
         num_workers=opt.n_cpu,  
         drop_last=True  
     )
@@ -224,7 +224,7 @@ if __name__ == '__main__':
                     #     AB_mask_j = AB_mask[j]
                     #     A_img_j = A_img[j]
 
-                        # 将图像分割为 16 个 512x512 的块
+                    # 将图像分割为 16 个 512x512 的块
                     for m in range(4):
                         for n in range(4):
                             left = n * 512
@@ -247,10 +247,10 @@ if __name__ == '__main__':
                             # if (epoch + 1) % opt.save_checkpoint == 0:
                             if epoch % opt.save_checkpoint == 0:
                                 out_img = transforms.ToPILImage(out)
-                                A_img_name = A_img.split('.')[0]
+                                # A_img_name = A_img.split('.')[0]
                                 # 保存图像到文件
                                 out_img.save(
-                                    "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch, A_img_name, m, n))
+                                    "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch, idx, m, n))
 
                                 # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                 # if m == 3 and n == 3:

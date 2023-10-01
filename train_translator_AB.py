@@ -297,6 +297,7 @@ if __name__ == '__main__':
                                                                                         # lab_shrmse_epoch, lab_frmse_epoch,
                                                                                         psnr_epoch)) # lab_psnr_epoch))
                                                                                         # lab_shpsnr_epoch, lab_fpsnr_epoch))
+            rmse_epoch /= val_samples
             if rmse_epoch < best_rmse and epoch > 1:  # >1是因为第一个epoch模型通常不好，不要保存
                     best_rmse = rmse_epoch
                     print("Saving checkpoint for {}".format(best_rmse))

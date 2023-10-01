@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
                             # if (epoch + 1) % opt.save_checkpoint == 0:
                             if epoch % opt.save_checkpoint == 0:
-                                out_img = transforms.ToPILImage()(out)
+                                out_img = transforms.ToPILImage()(out[0])
                                 # A_img_name = A_img.split('.')[0]
                                 # 保存图像到文件
                                 out_img.save(

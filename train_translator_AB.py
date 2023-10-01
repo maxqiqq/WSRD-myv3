@@ -47,7 +47,6 @@ if __name__ == '__main__':
     parser.add_argument("--image_dir", default="./savepoint_gallery",
                         help="Path for the directory used to save the output test images")
     parser.add_argument("--mask_weight", type=float, default=0.05, help="mask loss weight")
-    parser.add_argument("--best_rmse", type=int, default=1e3, help="best rmse")
     # loss.py中的def compute_perceptual_loss_v(self, synthetic, real):其中三大部分前面的weight也可以更改
     opt = parser.parse_args()
 
@@ -108,6 +107,8 @@ if __name__ == '__main__':
     translator_train_perc_loss = []
     translator_valid_perc_loss = []
     translator_valid_error = []
+
+    best_rmse=1e3
     
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
@@ -339,5 +340,6 @@ if __name__ == '__main__':
 
                 with open('./logs/config/hyperparameters.txt', 'w') as f:
                     f.write(str(opt))
+                    f.write("best_rmse: {}".format(best_rmse))
             
 

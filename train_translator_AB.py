@@ -192,10 +192,10 @@ if __name__ == '__main__':
         translator_train_pix_loss.append(train_epoch_pix_loss)
 
         if epoch % opt.save_interval == 0:
-            np.save(f"./logs/loss/translator_train_loss_{}.npy".format(epoch), np.array(translator_train_loss))
-            np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
-            np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
-            np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
+            np.save(f"./logs/loss/translator_train_loss_epoch{epoch}.npy", np.array(translator_train_loss))
+            np.save(f"./logs/loss/translator_train_mask_loss_epoch{epoch}.npy", np.array(translator_train_mask_loss))
+            np.save(f"./logs/loss/translator_train_perc_loss_epoch{epoch}.npy", np.array(translator_train_perc_loss))
+            np.save(f"./logs/loss/translator_train_pix_loss_epoch{epoch}.npy", np.array(translator_train_pix_loss))
         
         # wandb.log({
              # "train_epoch_loss_avg": train_epoch_loss / len(train_set),
@@ -297,11 +297,11 @@ if __name__ == '__main__':
             translator_valid_perc_loss.append(valid_perc_loss)
 
             if epoch % opt.save_interval == 0:
-                np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
-                np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
-                np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
-                np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
-                np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
+                np.save(f"./logs/loss/translator_valid_loss_epoch{epoch}.npy", np.array(translator_valid_loss))
+                np.save(f"./logs/loss/translator_valid_mask_loss_epoch{epoch}.npy", np.array(translator_valid_mask_loss))
+                np.save(f"./logs/loss/translator_valid_perc_loss_epoch{epoch}.npy", np.array(translator_valid_perc_loss))
+                np.save(f"./logs/loss/translator_valid_pix_loss_epoch{epoch}.npy", np.array(translator_valid_pix_loss))
+                np.save(f"./logs/error/translator_valid_error_epoch{epoch}.npy", np.array(translator_valid_error))
             
             # wandb.log({
             #      "valid_epoch_loss_avg": valid_epoch_loss / len(validation_set),

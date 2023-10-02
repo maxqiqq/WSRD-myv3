@@ -192,7 +192,7 @@ if __name__ == '__main__':
         translator_train_pix_loss.append(train_epoch_pix_loss)
 
         if epoch % opt.save_interval == 0:
-            np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
+            np.save(f"./logs/loss/translator_train_loss_{}.npy".format(epoch), np.array(translator_train_loss))
             np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
             np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
             np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
@@ -278,9 +278,9 @@ if __name__ == '__main__':
 
                             # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
                             valid_epoch_loss += loss_G.detach().item()
-                            valid_mask_loss += mask_loss.detach()
-                            valid_pix_loss += loss_pixel.detach()
-                            valid_perc_loss += perceptual_loss.detach()
+                            valid_mask_loss += mask_loss.detach().item()
+                            valid_pix_loss += loss_pixel.detach().item()
+                            valid_perc_loss += perceptual_loss.detach().item()
 
                             epoch_err += re
                             rmse_epoch += rmse

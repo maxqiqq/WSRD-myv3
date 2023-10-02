@@ -343,7 +343,7 @@ if __name__ == '__main__':
             # torch.save(translator.cpu().state_dict(), "./logs/model/distillnet_epoch{}.pth".format(epoch))
             # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
-            if epoch % opt.save_interval == 0：
+            if epoch % opt.save_interval == 0:
                 with open('./logs/config/hyperparameters.txt', 'w') as f:
                     f.write(str(opt))
                     f.write("\nbest_rmse: {}".format(best_rmse))

@@ -328,7 +328,7 @@ if __name__ == '__main__':
             
             if rmse_epoch < best_rmse and epoch > 1:  # >1是因为第一个epoch模型通常不好，不要保存
                     best_rmse = rmse_epoch
-                    print("    \rSaving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
+                    print("   \rSaving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
                     torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
                     torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
                 
@@ -343,9 +343,9 @@ if __name__ == '__main__':
             # torch.save(translator.cpu().state_dict(), "./logs/model/distillnet_epoch{}.pth".format(epoch))
             # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
-            if epoch == opt.n_epochs:
+            if epoch % opt.save_interval == 0：
                 with open('./logs/config/hyperparameters.txt', 'w') as f:
                     f.write(str(opt))
-                    f.write("best_rmse: {}".format(best_rmse))
+                    f.write("\nbest_rmse: {}".format(best_rmse))
             
 

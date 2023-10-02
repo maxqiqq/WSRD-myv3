@@ -47,6 +47,7 @@ if __name__ == '__main__':
     parser.add_argument("--image_dir", default="./savepoint_gallery",
                         help="Path for the directory used to save the output test images")
     parser.add_argument("--mask_weight", type=float, default=0.05, help="mask loss weight")
+    parser.add_argument("--save_interval", type=int, default=1, help="save translator_train/valid_loss/error interval")
     # loss.py中的def compute_perceptual_loss_v(self, synthetic, real):其中三大部分前面的weight也可以更改
     opt = parser.parse_args()
 
@@ -185,10 +186,16 @@ if __name__ == '__main__':
             optimizer_G.step()   
             # 如果你是在每个小块上计算损失，那么你应该在处理完一个batch的所有小块后，再进行权重的更新。也就是说，你先计算出一个batch中所有小块的损失，然后将这些损失加起来得到整个batch的总损失，最后根据这个总损失来更新权重。
         
-        translator_train_loss.append(train_epoch_loss)             # 空列表train_epoch_loss最终会print出来
+        translator_train_loss.append(train_epoch_loss)             
         translator_train_mask_loss.append(train_epoch_mask_loss)   # 每个训练周期的总损失，而不是平均损失，可以帮助我们更好地理解模型在整个训练周期中的表现，而不仅仅是单个样本的表现。
-        translator_train_perc_loss.append(train_epoch_perc_loss)   # 完全的数据转移，没用；我都保存到wandb里面，注释了之前的设置
+        translator_train_perc_loss.append(train_epoch_perc_loss)   
         translator_train_pix_loss.append(train_epoch_pix_loss)
+
+        if epoch % opt.save_interval == 0:
+            np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
+            np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
+            np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
+            np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
         
         # wandb.log({
              # "train_epoch_loss_avg": train_epoch_loss / len(train_set),
@@ -246,10 +253,13 @@ if __name__ == '__main__':
                             # if (epoch + 1) % opt.save_checkpoint == 0:
                             if epoch % opt.save_checkpoint == 0:
                                 out_img = transforms.ToPILImage()(out[0])
+                                inp_img =  transforms.ToPILImage()(inp[0])
                                 # A_img_name = A_img.split('.')[0]
                                 # 保存图像到文件
                                 out_img.save(
                                     "{}/{}/out_{}_{}_{}.png".format(opt.image_dir, epoch, idx, m, n))
+                                inp_img.save(
+                                    "{}/{}/inp_{}_{}_{}.png".format(opt.image_dir, epoch, idx, m, n))
 
                                 # 接下来就是Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                 # if m == 3 and n == 3:
@@ -285,6 +295,13 @@ if __name__ == '__main__':
             translator_valid_mask_loss.append(valid_mask_loss)
             translator_valid_pix_loss.append(valid_pix_loss)
             translator_valid_perc_loss.append(valid_perc_loss)
+
+            if epoch % opt.save_interval == 0:
+                np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
+                np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
+                np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
+                np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
+                np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
             
             # wandb.log({
             #      "valid_epoch_loss_avg": valid_epoch_loss / len(validation_set),
@@ -327,17 +344,6 @@ if __name__ == '__main__':
             # torch.save(optimizer_G.state_dict(), "./logs/model/optimizer_epoch{}.pth".format(epoch))
             
             if epoch == opt.n_epochs:
-                np.save(f"./logs/loss/translator_train_loss.npy", np.array(translator_train_loss))
-                np.save(f"./logs/loss/translator_train_mask_loss.npy", np.array(translator_train_mask_loss))
-                np.save(f"./logs/loss/translator_train_perc_loss.npy", np.array(translator_train_perc_loss))
-                np.save(f"./logs/loss/translator_train_pix_loss.npy", np.array(translator_train_pix_loss))
-    
-                np.save(f"./logs/loss/translator_valid_loss.npy", np.array(translator_valid_loss))
-                np.save(f"./logs/loss/translator_valid_mask_loss.npy", np.array(translator_valid_mask_loss))
-                np.save(f"./logs/loss/translator_valid_perc_loss.npy", np.array(translator_valid_perc_loss))
-                np.save(f"./logs/loss/translator_valid_pix_loss.npy", np.array(translator_valid_pix_loss))
-                np.save(f"./logs/error/translator_valid_error.npy", np.array(translator_valid_error))
-
                 with open('./logs/config/hyperparameters.txt', 'w') as f:
                     f.write(str(opt))
                     f.write("best_rmse: {}".format(best_rmse))

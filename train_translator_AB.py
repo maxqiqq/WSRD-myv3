@@ -41,7 +41,6 @@ if __name__ == '__main__':
 
     parser.add_argument("--valid_checkpoint", type=int, default=1, help="checkpoint for validation")
     parser.add_argument("--save_checkpoint", type=int, default=2, help="checkpoint for visual inspection")
-    parser.add_argument("--save_interval", type=int, default=1, help="save translator_train/valid_loss/error interval")
     opt = parser.parse_args()
 
     wandb.init(project="WSRD-myv3", config=vars(opt))
@@ -102,6 +101,8 @@ if __name__ == '__main__':
 
     best_rmse=1e3
     
+    wandb.define_metric("Epoch", step_metric="epoch")
+        
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
         train_epoch_pix_loss = 0
@@ -166,26 +167,6 @@ if __name__ == '__main__':
         train_table_data.append([epoch, train_epoch_loss, train_epoch_pix_loss, train_epoch_perc_loss, train_epoch_mask_loss])
         train_table = wandb.Table(data=train_table_data, columns=["Epoch", "Train_Epoch_Loss", "Train_Epoch_Pix_Loss", "Train_Epoch_Perc_Loss", "Train_Epoch_Mask_Loss"])
         wandb.log({"Train Epoch Loss Table": train_table})
-
-        # translator_train_loss.append(train_epoch_loss)
-        # translator_train_mask_loss.append(train_epoch_mask_loss)
-        # translator_train_perc_loss.append(train_epoch_perc_loss)
-        # translator_train_pix_loss.append(train_epoch_pix_loss)
-        # # 将数据列表保存为字典
-        # data_dict = {
-        #     "translator_train_loss": translator_train_loss,
-        #     "translator_train_mask_loss": translator_train_mask_loss,
-        #     "translator_train_perc_loss": translator_train_perc_loss,
-        #     "translator_train_pix_loss": translator_train_pix_loss
-        # }
-        # # 使用wandb.save()保存字典到WandB
-        # wandb.save("train_data_dict.pkl", data_dict)
-
-        # if epoch % opt.save_interval == 0:
-        #     np.save(f"./logs/loss/translator_train_loss_epoch{epoch}.npy", np.array(translator_train_loss))
-        #     np.save(f"./logs/loss/translator_train_mask_loss_epoch{epoch}.npy", np.array(translator_train_mask_loss))
-        #     np.save(f"./logs/loss/translator_train_perc_loss_epoch{epoch}.npy", np.array(translator_train_perc_loss))
-        #     np.save(f"./logs/loss/translator_train_pix_loss_epoch{epoch}.npy", np.array(translator_train_pix_loss))
         
         wandb.log({  # log是画出曲线图
              "train_loss_epoch": train_epoch_loss,
@@ -281,19 +262,6 @@ if __name__ == '__main__':
                                                                 "Epoch_Err", "RMSE_Epoch", "PSNR_Epoch"])
             wandb.log({"Valid Epoch Loss&Error Table": valid_table})
 
-            # translator_valid_error.append((epoch_err, rmse_epoch, psnr_epoch))
-            # translator_valid_loss.append(valid_epoch_loss)
-            # translator_valid_mask_loss.append(valid_mask_loss)
-            # translator_valid_pix_loss.append(valid_pix_loss)
-            # translator_valid_perc_loss.append(valid_perc_loss)
-            #
-            # if epoch % opt.save_interval == 0:
-            #     np.save(f"./logs/loss/translator_valid_loss_epoch{epoch}.npy", np.array(translator_valid_loss))
-            #     np.save(f"./logs/loss/translator_valid_mask_loss_epoch{epoch}.npy", np.array(translator_valid_mask_loss))
-            #     np.save(f"./logs/loss/translator_valid_perc_loss_epoch{epoch}.npy", np.array(translator_valid_perc_loss))
-            #     np.save(f"./logs/loss/translator_valid_pix_loss_epoch{epoch}.npy", np.array(translator_valid_pix_loss))
-            #     np.save(f"./logs/error/translator_valid_error_epoch{epoch}.npy", np.array(translator_valid_error))
-            
             wandb.log({
                  "valid_loss_epoch": valid_epoch_loss,
                  "valid_mask_loss_epoch": valid_mask_loss,
@@ -318,7 +286,7 @@ if __name__ == '__main__':
                 print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
                 torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
                 torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
-                wandb.config.update({"best_rmse": best_rmse})
+                wandb.config.update({"best_rmse": best_rmse}, allow_val_change=True)
 
 wandb.finish()
 

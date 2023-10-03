@@ -89,16 +89,9 @@ if __name__ == '__main__':
     num_samples = len(dataloader)
     val_samples = len(val_dataloader)
 
-    translator_train_loss = []  
-    translator_valid_loss = []
-    translator_train_mask_loss = []
-    translator_valid_mask_loss = []
-    translator_train_pix_loss = []
-    translator_valid_pix_loss = []
-    translator_train_perc_loss = []
-    translator_valid_perc_loss = []
-    translator_valid_error = []
-
+    valid_table_data = []
+    train_table_data = []
+    
     best_rmse=1e3
     
     wandb.define_metric("Epoch", step_metric="epoch")
@@ -163,10 +156,7 @@ if __name__ == '__main__':
             # 一个batch后更新模型参数
             optimizer_G.step()
 
-        train_table_data = []
         train_table_data.append([epoch, train_epoch_loss, train_epoch_pix_loss, train_epoch_perc_loss, train_epoch_mask_loss])
-        train_table = wandb.Table(data=train_table_data, columns=["Epoch", "Train_Epoch_Loss", "Train_Epoch_Pix_Loss", "Train_Epoch_Perc_Loss", "Train_Epoch_Mask_Loss"])
-        wandb.log({"Train Epoch Loss Table": train_table})
         
         wandb.log({  # log是画出曲线图
              "train_loss_epoch": train_epoch_loss,
@@ -177,13 +167,13 @@ if __name__ == '__main__':
 
         scheduler.step()
 
-        if epoch % opt.valid_checkpoint == 0 or epoch in [0, 1]:
+        if epoch % opt.save_checkpoint == 0:
+            os.makedirs("./savepoint_gallery/{}".format(epoch), exist_ok=True)
+            all_tiles = []
+
+        if epoch % opt.valid_checkpoint == 0:
             with torch.no_grad():
                 translator = translator.eval()
-
-                if epoch % opt.save_checkpoint == 0:
-                    os.makedirs("./savepoint_gallery/{}".format(epoch), exist_ok=True)
-                    all_tiles = []
 
                 for idx, (B_img, AB_mask, A_img) in enumerate(val_dataloader):
                     B_img = B_img.to(device)
@@ -250,43 +240,43 @@ if __name__ == '__main__':
                             rmse_epoch += rmse
                             psnr_epoch += psnr
 
-            epoch_err /= val_samples
-            rmse_epoch /= val_samples
-            psnr_epoch /= val_samples
+        epoch_err /= val_samples
+        rmse_epoch /= val_samples
+        psnr_epoch /= val_samples
 
-            valid_table_data = []
-            valid_table_data.append(
-                [epoch, valid_epoch_loss, valid_pix_loss, valid_perc_loss, valid_mask_loss, epoch_err, rmse_epoch, psnr_epoch])
-            valid_table = wandb.Table(data=valid_table_data, columns=["Epoch", "Valid_Epoch_Loss", "Valid_Epoch_Pix_Loss",
-                                                                "Valid_Epoch_Perc_Loss", "Valid_Epoch_Mask_Loss",
-                                                                "Epoch_Err", "RMSE_Epoch", "PSNR_Epoch"])
-            wandb.log({"Valid Epoch Loss&Error Table": valid_table})
+        valid_table_data.append(
+            [epoch, valid_epoch_loss, valid_pix_loss, valid_perc_loss, valid_mask_loss, epoch_err, rmse_epoch, psnr_epoch])
 
-            wandb.log({
-                 "valid_loss_epoch": valid_epoch_loss,
-                 "valid_mask_loss_epoch": valid_mask_loss,
-                 "valid_pix_loss_epoch": valid_pix_loss,
-                 "valid_perc_loss_epoch": valid_perc_loss,
-                 "epoch_err_avg":  epoch_err,
-                 "rmse_epoch_avg":  rmse_epoch,
-                 "psnr_epoch_avg":  psnr_epoch
-            }, step=epoch)
+        wandb.log({
+             "valid_loss_epoch": valid_epoch_loss,
+             "valid_mask_loss_epoch": valid_mask_loss,
+             "valid_pix_loss_epoch": valid_pix_loss,
+             "valid_perc_loss_epoch": valid_perc_loss,
+             "epoch_err_avg":  epoch_err,
+             "rmse_epoch_avg":  rmse_epoch,
+             "psnr_epoch_avg":  psnr_epoch
+        }, step=epoch)
 
-            print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
-                                                                                        epoch, train_epoch_loss,
-                                                                                        valid_epoch_loss, train_epoch_mask_loss,
-                                                                                        valid_mask_loss,
-                                                                                        rmse_epoch,  # lab_rmse_epoch,
-                                                                                        # lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                        psnr_epoch)) # lab_psnr_epoch))
-                                                                                        # lab_shpsnr_epoch, lab_fpsnr_epoch))
-            
-            if rmse_epoch < best_rmse and epoch > 1:
-                best_rmse = rmse_epoch
-                print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
-                torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
-                torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
-                wandb.config.update({"best_rmse": best_rmse}, allow_val_change=True)
-
-wandb.finish()
-
+        print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
+                                                                                    epoch, train_epoch_loss,
+                                                                                    valid_epoch_loss, train_epoch_mask_loss,
+                                                                                    valid_mask_loss,
+                                                                                    rmse_epoch,  # lab_rmse_epoch,
+                                                                                    # lab_shrmse_epoch, lab_frmse_epoch,
+                                                                                    psnr_epoch)) # lab_psnr_epoch))
+                                                                                    # lab_shpsnr_epoch, lab_fpsnr_epoch))
+        
+        if rmse_epoch < best_rmse and epoch > 1:
+            best_rmse = rmse_epoch
+            print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
+            torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
+            torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))
+            wandb.config.update({"best_rmse": best_rmse}, allow_val_change=True)
+        
+    train_table = wandb.Table(data=train_table_data, columns=["Epoch", "Train_Epoch_Loss", "Train_Epoch_Pix_Loss", "Train_Epoch_Perc_Loss", "Train_Epoch_Mask_Loss"])
+    wandb.log({"Train Epoch Loss Table": train_table})
+    valid_table = wandb.Table(data=valid_table_data, columns=["Epoch", "Valid_Epoch_Loss", "Valid_Epoch_Pix_Loss",
+                                                        "Valid_Epoch_Perc_Loss", "Valid_Epoch_Mask_Loss",
+                                                        "Epoch_Err", "RMSE_Epoch", "PSNR_Epoch"])
+    wandb.log({"Valid Epoch Loss&Error Table": valid_table})
+        

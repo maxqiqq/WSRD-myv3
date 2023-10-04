@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument("--mask_weight", type=float, default=0.05, help="mask loss weight")
 
     parser.add_argument("--valid_checkpoint", type=int, default=1, help="checkpoint for validation")
-    parser.add_argument("--save_checkpoint", type=int, default=2, help="checkpoint for visual inspection")
+    parser.add_argument("--save_checkpoint", type=int, default=5, help="checkpoint for visual inspection")
     opt = parser.parse_args()
 
     wandb.init(project="WSRD-myv3", config=vars(opt))
@@ -89,12 +89,13 @@ if __name__ == '__main__':
     num_samples = len(dataloader)
     val_samples = len(val_dataloader)
 
+    best_rmse = 600
+
     valid_table_data = []
     train_table_data = []
-    
-    best_rmse=1e3
-    
+
     wandb.define_metric("Epoch", step_metric="epoch")
+    wandb.define_metric("num", step_metric="idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
@@ -167,10 +168,6 @@ if __name__ == '__main__':
 
         scheduler.step()
 
-        if epoch % opt.save_checkpoint == 0:
-            os.makedirs("./savepoint_gallery/{}".format(epoch), exist_ok=True)
-            all_tiles = []
-
         if epoch % opt.valid_checkpoint == 0:
             with torch.no_grad():
                 translator = translator.eval()
@@ -179,6 +176,9 @@ if __name__ == '__main__':
                     B_img = B_img.to(device)
                     AB_mask = AB_mask.to(device)
                     A_img = A_img.to(device)
+
+                    if epoch % opt.save_checkpoint == 0:
+                        all_tiles = []
 
                     # 将图像分割为 16 个 512x512 的块
                     for m in range(4):
@@ -199,7 +199,6 @@ if __name__ == '__main__':
 
                             if epoch % opt.save_checkpoint == 0:
                                 out_img = transforms.ToPILImage()(out[0])
-                                out_img_filename = "out_{}_{}_{}.png".format(idx, m, n)
                                 all_tiles.append(out_img)
                                 if m == 3 and n == 3:
                                     # 计算拼接后的图片大小（假设每个小块的大小为512x512）
@@ -208,17 +207,15 @@ if __name__ == '__main__':
                                     output_height = tile_size * 4
                                     # 创建一个空白的完整图片
                                     fullout = Image.new('RGB', (output_width, output_height))
-
                                     # 遍历all_tiles中的小块，将它们拼接到完整图片上
                                     for i, tile in enumerate(all_tiles):
                                         row = i // 4
                                         col = i % 4
                                         left = col * tile_size
                                         upper = row * tile_size
-                                        fullout.paste(tile, (left, upper))
-                                        # 穿插接缝处理Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
+                                        fullout.paste(tile, (left, upper))# 穿插接缝处理Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                     # 保存拼接后的完整图片
-                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)]})
+                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)]}, step=idx)
 
                             # 模仿源文件，设计一系列loss计算
                             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())

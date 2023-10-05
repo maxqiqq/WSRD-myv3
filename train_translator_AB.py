@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument("--mask_weight", type=float, default=0.05, help="mask loss weight")
 
     parser.add_argument("--valid_checkpoint", type=int, default=1, help="checkpoint for validation")
-    parser.add_argument("--save_checkpoint", type=int, default=5, help="checkpoint for visual inspection")
+    parser.add_argument("--save_checkpoint", type=int, default=2, help="checkpoint for visual inspection")
     opt = parser.parse_args()
 
     wandb.init(project="WSRD-myv3", config=vars(opt))

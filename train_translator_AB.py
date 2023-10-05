@@ -103,19 +103,19 @@ if __name__ == '__main__':
     wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
-        train_epoch_loss == 0
-        train_epoch_pix_loss == 0
-        train_epoch_perc_loss == 0
-        train_epoch_mask_loss == 0
+        train_epoch_loss = 0
+        train_epoch_pix_loss = 0
+        train_epoch_perc_loss = 0
+        train_epoch_mask_loss = 0
 
-        valid_epoch_loss == 0
-        valid_mask_loss == 0
-        valid_perc_loss == 0
-        valid_pix_loss == 0
+        valid_epoch_loss = 0
+        valid_mask_loss = 0
+        valid_perc_loss = 0
+        valid_pix_loss = 0
 
-        err_epoch == 0
-        err_rmse_epoch == 0
-        err_psnr_epoch == 0
+        err_epoch = 0
+        err_rmse_epoch = 0
+        err_psnr_epoch = 0
 
         translator = translator.cuda()
         translator = translator.train()

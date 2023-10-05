@@ -100,19 +100,19 @@ if __name__ == '__main__':
     wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
-        train/epoch_loss == 0
-        train/epoch_pix_loss == 0
-        train/epoch_perc_loss == 0
-        train/epoch_mask_loss == 0
+        train_epoch_loss == 0
+        train_epoch_pix_loss == 0
+        train_epoch_perc_loss == 0
+        train_epoch_mask_loss == 0
 
-        valid/epoch_loss == 0
-        valid/mask_loss == 0
-        valid/perc_loss == 0
-        valid/pix_loss == 0
+        valid_epoch_loss == 0
+        valid_mask_loss == 0
+        valid_perc_loss == 0
+        valid_pix_loss == 0
 
-        err/epoch == 0
-        err/rmse_epoch == 0
-        err/psnr_epoch == 0
+        err_epoch == 0
+        err_rmse_epoch == 0
+        err_psnr_epoch == 0
 
         translator = translator.cuda()
         translator = translator.train()
@@ -149,21 +149,21 @@ if __name__ == '__main__':
                     loss_G.backward()
                         
                     # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
-                    train/epoch_loss += loss_G.detach().item()
-                    train/epoch_pix_loss += loss_pixel.detach().item()
-                    train/epoch_perc_loss += perceptual_loss.detach().item()
-                    train/epoch_mask_loss += mask_loss.detach().item()
+                    train_epoch_loss += loss_G.detach().item()
+                    train_epoch_pix_loss += loss_pixel.detach().item()
+                    train_epoch_perc_loss += perceptual_loss.detach().item()
+                    train_epoch_mask_loss += mask_loss.detach().item()
 
             # 一个batch后更新模型参数
             optimizer_G.step()
 
-        train_table_data.append([epoch, train/epoch_loss, train/epoch_pix_loss, train/epoch_perc_loss, train/epoch_mask_loss])
+        train_table_data.append([epoch, train_epoch_loss, train_epoch_pix_loss, train_epoch_perc_loss, train_epoch_mask_loss])
         
         wandb.log({  # log是画出曲线图
-             "train/loss_epoch": train/epoch_loss,
-             "train/mask_loss_epoch": train/epoch_mask_loss,
-             "train/pix_loss_epoch": train/epoch_pix_loss,
-             "train/perc_loss_epoch": train/epoch_perc_loss,
+             "train/loss_epoch": train_epoch_loss,
+             "train/mask_loss_epoch": train_epoch_mask_loss,
+             "train/pix_loss_epoch": train_epoch_pix_loss,
+             "train/perc_loss_epoch": train_epoch_perc_loss,
              "Epoch": epoch
          })
 
@@ -229,40 +229,40 @@ if __name__ == '__main__':
                             re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
 
                             # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
-                            valid/epoch_loss += loss_G.detach().item()
-                            valid/mask_loss += mask_loss.detach().item()
-                            valid/pix_loss += loss_pixel.detach().item()
-                            valid/perc_loss += perceptual_loss.detach().item()
+                            valid_epoch_loss += loss_G.detach().item()
+                            valid_mask_loss += mask_loss.detach().item()
+                            valid_pix_loss += loss_pixel.detach().item()
+                            valid_perc_loss += perceptual_loss.detach().item()
 
-                            err/epoch += re
-                            err/rmse_epoch += rmse
-                            err/psnr_epoch += psnr
+                            err_epoch += re
+                            err_rmse_epoch += rmse
+                            err_psnr_epoch += psnr
 
-        err/epoch /= val_samples
-        err/rmse_epoch /= val_samples
-        err/psnr_epoch /= val_samples
+        err_epoch /= val_samples
+        err_rmse_epoch /= val_samples
+        err_psnr_epoch /= val_samples
 
         valid_table_data.append(
-            [epoch, valid/epoch_loss, valid/pix_loss, valid/perc_loss, valid/mask_loss, err/epoch, err/rmse_epoch, err/psnr_epoch])
+            [epoch, valid_epoch_loss, valid_pix_loss, valid_perc_loss, valid_mask_loss, err_epoch, err_rmse_epoch, err_psnr_epoch])
 
         wandb.log({
-             "valid/loss_epoch": valid/epoch_loss,
-             "valid/mask_loss_epoch": valid/mask_loss,
-             "valid/pix_loss_epoch": valid/pix_loss,
-             "valid/perc_loss_epoch": valid/perc_loss,
-             "err/epoch":  err/epoch,
-             "err/rmse_epoch":  err/rmse_epoch,
-             "err/psnr_epoch":  err/psnr_epoch,
+             "valid/loss_epoch": valid_epoch_loss,
+             "valid/mask_loss_epoch": valid_mask_loss,
+             "valid/pix_loss_epoch": valid_pix_loss,
+             "valid/perc_loss_epoch": valid_perc_loss,
+             "err/epoch":  err_epoch,
+             "err/rmse_epoch":  err_rmse_epoch,
+             "err/psnr_epoch":  err_psnr_epoch,
              "Epoch": epoch
         })
 
         print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
-                                                                                    epoch, train/epoch_loss,
-                                                                                    valid/epoch_loss, train/epoch_mask_loss,
-                                                                                    valid/mask_loss,
-                                                                                    err/rmse_epoch,  # lab_rmse_epoch,
+                                                                                    epoch, train_epoch_loss,
+                                                                                    valid_epoch_loss, train_epoch_mask_loss,
+                                                                                    valid_mask_loss,
+                                                                                    err_rmse_epoch,  # lab_rmse_epoch,
                                                                                     # lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                    err/psnr_epoch)) # lab_psnr_epoch))
+                                                                                    err_psnr_epoch)) # lab_psnr_epoch))
                                                                                     # lab_shpsnr_epoch, lab_fpsnr_epoch))
         
         if rmse_epoch < best_rmse and epoch > 1:

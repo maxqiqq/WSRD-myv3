@@ -268,8 +268,8 @@ if __name__ == '__main__':
                                                                                     err_psnr_epoch)) # lab_psnr_epoch))
                                                                                     # lab_shpsnr_epoch, lab_fpsnr_epoch))
         
-        if rmse_epoch < best_rmse and epoch > 1:
-            best_rmse = rmse_epoch
+        if err_rmse_epoch < best_rmse and epoch > 1:
+            best_rmse = err_rmse_epoch
             print("Saving checkpoint for epoch {} and RMSE {}".format(epoch, best_rmse))
             torch.save(translator.cpu().state_dict(), "./best_rmse_model/distillnet_epoch{}.pth".format(epoch))
             torch.save(optimizer_G.state_dict(), "./best_rmse_model/optimizer_epoch{}.pth".format(epoch))

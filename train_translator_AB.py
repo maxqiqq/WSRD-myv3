@@ -164,7 +164,7 @@ if __name__ == '__main__':
              "train/mask_loss_epoch": train/epoch_mask_loss,
              "train/pix_loss_epoch": train/epoch_pix_loss,
              "train/perc_loss_epoch": train/epoch_perc_loss,
-             "Epoch”: epoch
+             "Epoch": epoch
          })
 
         scheduler.step()
@@ -216,7 +216,7 @@ if __name__ == '__main__':
                                         upper = row * tile_size
                                         fullout.paste(tile, (left, upper))# 穿插接缝处理Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                     # 保存拼接后的完整图片
-                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)], "Idx”: idx})
+                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)], "Idx": idx})
 
                             # 模仿源文件，设计一系列loss计算
                             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
@@ -253,7 +253,7 @@ if __name__ == '__main__':
              "err/epoch":  err/epoch,
              "err/rmse_epoch":  err/rmse_epoch,
              "err/psnr_epoch":  err/psnr_epoch,
-             "Epoch”: epoch
+             "Epoch": epoch
         })
 
         print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(

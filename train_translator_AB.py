@@ -94,25 +94,25 @@ if __name__ == '__main__':
     valid_table_data = []
     train_table_data = []
 
-    wandb.define_metric("Epoch", step_metric="epoch")
-    wandb.define_metric("num", step_metric="idx")
+    wandb.define_metric("Epoch")
+    wandb.define_metric("Idx")    
+    wandb.define_metric("train/*", "valid/*", "err/*", step_metric="Epoch")
+    wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
-        train_epoch_loss = 0
-        train_epoch_pix_loss = 0
-        train_epoch_perc_loss = 0
-        train_epoch_mask_loss = 0
+        train/epoch_loss = 0
+        train/epoch_pix_loss = 0
+        train/epoch_perc_loss = 0
+        train/epoch_mask_loss = 0
 
-        valid_epoch_loss = 0
-        valid_mask_loss = 0
-        valid_perc_loss = 0
-        valid_pix_loss = 0
+        valid/epoch_loss = 0
+        valid/mask_loss = 0
+        valid/perc_loss = 0
+        valid/pix_loss = 0
 
-        epoch_err = 0
-        epoch_p = 0
-
-        rmse_epoch = 0
-        psnr_epoch = 0
+        err/epoch = 0
+        err/rmse_epoch = 0
+        err/psnr_epoch = 0
 
         translator = translator.cuda()
         translator = translator.train()
@@ -149,22 +149,23 @@ if __name__ == '__main__':
                     loss_G.backward()
                         
                     # 计算每一块的tile_loss之和，遍历所有pic的所有16 tiles
-                    train_epoch_loss += loss_G.detach().item()
-                    train_epoch_pix_loss += loss_pixel.detach().item()
-                    train_epoch_perc_loss += perceptual_loss.detach().item()
-                    train_epoch_mask_loss += mask_loss.detach().item()
+                    train/epoch_loss += loss_G.detach().item()
+                    train/epoch_pix_loss += loss_pixel.detach().item()
+                    train/epoch_perc_loss += perceptual_loss.detach().item()
+                    train/epoch_mask_loss += mask_loss.detach().item()
 
             # 一个batch后更新模型参数
             optimizer_G.step()
 
-        train_table_data.append([epoch, train_epoch_loss, train_epoch_pix_loss, train_epoch_perc_loss, train_epoch_mask_loss])
+        train_table_data.append([epoch, train/epoch_loss, train/epoch_pix_loss, train/epoch_perc_loss, train/epoch_mask_loss])
         
         wandb.log({  # log是画出曲线图
-             "train_loss_epoch": train_epoch_loss,
-             "train_mask_loss_epoch": train_epoch_mask_loss,
-             "train_pix_loss_epoch": train_epoch_pix_loss,
-             "train_perc_loss_epoch": train_epoch_perc_loss
-         }, step=epoch)
+             "train/loss_epoch": train/epoch_loss,
+             "train/mask_loss_epoch": train/epoch_mask_loss,
+             "train/pix_loss_epoch": train/epoch_pix_loss,
+             "train/perc_loss_epoch": train/epoch_perc_loss,
+             "Epoch”: epoch
+         })
 
         scheduler.step()
 
@@ -215,7 +216,7 @@ if __name__ == '__main__':
                                         upper = row * tile_size
                                         fullout.paste(tile, (left, upper))# 穿插接缝处理Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                     # 保存拼接后的完整图片
-                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)]}, step=idx)
+                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)], "Idx”: idx})
 
                             # 模仿源文件，设计一系列loss计算
                             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())
@@ -228,39 +229,40 @@ if __name__ == '__main__':
                             re, _ = analyze_image_pair(out.squeeze(0), gt.squeeze(0))
 
                             # 计算每一块的tile_loss之和，遍历所有val_pic的所有16 tiles
-                            valid_epoch_loss += loss_G.detach().item()
-                            valid_mask_loss += mask_loss.detach().item()
-                            valid_pix_loss += loss_pixel.detach().item()
-                            valid_perc_loss += perceptual_loss.detach().item()
+                            valid/epoch_loss += loss_G.detach().item()
+                            valid/mask_loss += mask_loss.detach().item()
+                            valid/pix_loss += loss_pixel.detach().item()
+                            valid/perc_loss += perceptual_loss.detach().item()
 
-                            epoch_err += re
-                            rmse_epoch += rmse
-                            psnr_epoch += psnr
+                            err/epoch += re
+                            err/rmse_epoch += rmse
+                            err/psnr_epoch += psnr
 
-        epoch_err /= val_samples
-        rmse_epoch /= val_samples
-        psnr_epoch /= val_samples
+        err/epoch /= val_samples
+        err/rmse_epoch /= val_samples
+        err/psnr_epoch /= val_samples
 
         valid_table_data.append(
-            [epoch, valid_epoch_loss, valid_pix_loss, valid_perc_loss, valid_mask_loss, epoch_err, rmse_epoch, psnr_epoch])
+            [epoch, valid/epoch_loss, valid/pix_loss, valid/perc_loss, valid/mask_loss, err/epoch, err/rmse_epoch, err/psnr_epoch])
 
         wandb.log({
-             "valid_loss_epoch": valid_epoch_loss,
-             "valid_mask_loss_epoch": valid_mask_loss,
-             "valid_pix_loss_epoch": valid_pix_loss,
-             "valid_perc_loss_epoch": valid_perc_loss,
-             "epoch_err_avg":  epoch_err,
-             "rmse_epoch_avg":  rmse_epoch,
-             "psnr_epoch_avg":  psnr_epoch
-        }, step=epoch)
+             "valid/loss_epoch": valid/epoch_loss,
+             "valid/mask_loss_epoch": valid/mask_loss,
+             "valid/pix_loss_epoch": valid/pix_loss,
+             "valid/perc_loss_epoch": valid/perc_loss,
+             "err/epoch":  err/epoch,
+             "err/rmse_epoch":  err/rmse_epoch,
+             "err/psnr_epoch":  err/psnr_epoch,
+             "Epoch”: epoch
+        })
 
         print("EPOCH: {} - GEN: {:.3f} | {:.3f} - MSK: {:.3f} | {:.3f} - RMSE {:.3f} - PSNR - {:.3f}".format(
-                                                                                    epoch, train_epoch_loss,
-                                                                                    valid_epoch_loss, train_epoch_mask_loss,
-                                                                                    valid_mask_loss,
-                                                                                    rmse_epoch,  # lab_rmse_epoch,
+                                                                                    epoch, train/epoch_loss,
+                                                                                    valid/epoch_loss, train/epoch_mask_loss,
+                                                                                    valid/mask_loss,
+                                                                                    err/rmse_epoch,  # lab_rmse_epoch,
                                                                                     # lab_shrmse_epoch, lab_frmse_epoch,
-                                                                                    psnr_epoch)) # lab_psnr_epoch))
+                                                                                    err/psnr_epoch)) # lab_psnr_epoch))
                                                                                     # lab_shpsnr_epoch, lab_fpsnr_epoch))
         
         if rmse_epoch < best_rmse and epoch > 1:
@@ -274,6 +276,6 @@ if __name__ == '__main__':
     wandb.log({"Train Epoch Loss Table": train_table})
     valid_table = wandb.Table(data=valid_table_data, columns=["Epoch", "Valid_Epoch_Loss", "Valid_Epoch_Pix_Loss",
                                                         "Valid_Epoch_Perc_Loss", "Valid_Epoch_Mask_Loss",
-                                                        "Epoch_Err", "RMSE_Epoch", "PSNR_Epoch"])
+                                                        "Err_Epoch", "Err_RMSE_Epoch", "Err_PSNR_Epoch"])
     wandb.log({"Valid Epoch Loss&Error Table": valid_table})
         

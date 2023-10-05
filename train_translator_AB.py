@@ -97,7 +97,9 @@ if __name__ == '__main__':
     wandb.define_metric("Epoch")
     wandb.define_metric("Idx")    
     
-    wandb.define_metric("train/*", "valid/*", "err/*", step_metric="Epoch")
+    wandb.define_metric("train/*", step_metric="Epoch")
+    wandb.define_metric("valid/*", step_metric="Epoch")
+    wandb.define_metric("err/*", step_metric="Epoch")
     wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):

@@ -94,8 +94,8 @@ if __name__ == '__main__':
     valid_table_data = []
     train_table_data = []
 
-    wandb.define_metric("Epoch")
-    wandb.define_metric("Idx")    
+    # wandb.define_metric("Epoch")
+    # wandb.define_metric("Idx")    
     wandb.define_metric("train/*", "valid/*", "err/*", step_metric="Epoch")
     wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         

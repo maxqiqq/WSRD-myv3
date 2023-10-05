@@ -95,12 +95,9 @@ if __name__ == '__main__':
     train_table_data = []
 
     wandb.define_metric("Epoch")
-    wandb.define_metric("Idx")    
-    
     wandb.define_metric("train/*", step_metric="Epoch")
     wandb.define_metric("valid/*", step_metric="Epoch")
     wandb.define_metric("err/*", step_metric="Epoch")
-    wandb.define_metric("savepoint_fullout_epoch{}", step_metric="Idx")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0
@@ -219,7 +216,7 @@ if __name__ == '__main__':
                                         upper = row * tile_size
                                         fullout.paste(tile, (left, upper))# 穿插接缝处理Poisson image editing的合一部分，当保存了最后一块out时，把之前保存的16个小块进行拼接
                                     # 保存拼接后的完整图片
-                                    wandb.log({"savepoint_fullout_epoch{}".format(epoch): [wandb.Image(fullout)], "Idx": idx})
+                                    wandb.log({"savepoint_fullout_epoch{}_{}".format(epoch, idx): [wandb.Image(fullout)]})
 
                             # 模仿源文件，设计一系列loss计算
                             synthetic_mask = compute_shadow_mask_otsu(inp, out.clone().detach())

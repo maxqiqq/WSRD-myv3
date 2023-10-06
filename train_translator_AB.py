@@ -98,6 +98,9 @@ if __name__ == '__main__':
     wandb.define_metric("train/*", step_metric="Epoch")
     wandb.define_metric("valid/*", step_metric="Epoch")
     wandb.define_metric("err/*", step_metric="Epoch")
+
+    wandb.define_metric("train/loss_epoch", summary="min")
+    wandb.define_metric("err/rmse_epoch", summary="min")
         
     for epoch in range(opt.resume_epoch, opt.n_epochs):
         train_epoch_loss = 0

@@ -157,8 +157,8 @@ if __name__ == '__main__':
                     train_epoch_perc_loss += perceptual_loss.detach().item()
                     train_epoch_mask_loss += mask_loss.detach().item()
 
-                    # 一个tile后更新模型参数（10.9尝试）
-                    optimizer_G.step()
+            # 一个batch后更新模型参数
+            optimizer_G.step()
 
         train_table_data.append([epoch, train_epoch_loss, train_epoch_pix_loss, train_epoch_perc_loss, train_epoch_mask_loss])
         
